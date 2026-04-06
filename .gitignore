@@ -1,37 +1,3 @@
 ```
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Dependencies
-venv/
-.venv/
-.env
-.env.local
-*.env.*
-
-# Test and coverage
-.pytest_cache/
-.coverage
-coverage/
-
-# Build and distribution
-build/
-dist/
-*.egg-info/
-
-# Logs
-*.log
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Analysis reports (regenerated on build)
-analysis_reports/
-
-# Extracted JSON data - now part of source format
-# extracted_data/ is tracked since it's the new source format
+.cache/
 ```
