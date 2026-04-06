@@ -3,660 +3,1740 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summer's Gone - Walkthrough Builder</title>
+    <title>Summer's Gone - Playthrough Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #1a1a2e;
-            --bg-secondary: #16213e;
-            --bg-tertiary: #0f3460;
-            --accent: #e94560;
-            --text-primary: #eee;
-            --text-secondary: #aaa;
-            --success: #4ade80;
-            --warning: #fbbf24;
-            --danger: #ef4444;
+            --bg-0: #061217;
+            --bg-1: #0f222b;
+            --bg-2: #143040;
+            --panel: #101f29;
+            --panel-soft: #142632;
+            --line: #27414f;
+            --text-main: #f3f7f9;
+            --text-soft: #9db0bc;
+            --accent-hot: #ff6b35;
+            --accent-cool: #2ec4b6;
+            --accent-gold: #ffd166;
+            --danger: #ff4f4f;
+            --ok: #49d586;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
             min-height: 100vh;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 280px 1fr 350px;
-            gap: 1rem;
-            height: 100vh;
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 20% 10%, #1f2f42 0%, transparent 45%),
+                radial-gradient(circle at 80% 20%, #3f2a22 0%, transparent 45%),
+                linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-2) 100%);
             padding: 1rem;
         }
 
-        /* Sidebar */
-        .sidebar {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            overflow-y: auto;
+        .shell {
+            display: grid;
+            gap: 1rem;
+            max-width: 1900px;
+            margin: 0 auto;
         }
 
-        .sidebar h2 {
-            color: var(--accent);
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
+        .card {
+            background: linear-gradient(170deg, rgba(19, 36, 47, 0.92) 0%, rgba(14, 31, 41, 0.92) 100%);
+            border: 1px solid rgba(73, 110, 129, 0.35);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(6px);
         }
 
-        .season-selector {
-            margin-bottom: 1.5rem;
-        }
-
-        .season-btn {
-            width: 100%;
-            padding: 0.75rem;
-            margin: 0.25rem 0;
-            background: var(--bg-tertiary);
-            border: none;
-            border-radius: 8px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .season-btn:hover, .season-btn.active {
-            background: var(--accent);
-        }
-
-        .scene-list {
-            list-style: none;
-        }
-
-        .scene-item {
-            padding: 0.6rem;
-            margin: 0.25rem 0;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .scene-item:hover, .scene-item.active {
-            background: var(--accent);
-        }
-
-        .scene-meta {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        /* Main Content */
-        .main-content {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-
-        .header {
+        .topbar {
+            padding: 1rem 1.2rem;
             display: flex;
-            justify-content: space-between;
+            flex-wrap: wrap;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--bg-tertiary);
+            justify-content: space-between;
+            gap: 0.8rem;
         }
 
-        .header h1 {
-            color: var(--accent);
-        }
-
-        .search-box {
+        .headline {
             display: flex;
-            gap: 0.5rem;
+            flex-direction: column;
+            gap: 0.15rem;
         }
 
-        .search-input {
-            padding: 0.5rem 1rem;
-            background: var(--bg-tertiary);
-            border: none;
-            border-radius: 6px;
-            color: var(--text-primary);
-            width: 250px;
+        .headline h1 {
+            font-size: clamp(1.2rem, 1.2vw + 0.9rem, 1.9rem);
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .headline p {
+            color: var(--text-soft);
+            font-size: 0.9rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input,
+        .select,
+        .btn {
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            font-family: inherit;
+        }
+
+        .input,
+        .select {
+            background: var(--panel-soft);
+            color: var(--text-main);
+            padding: 0.6rem 0.8rem;
+            border-color: #28424e;
+            min-height: 40px;
+        }
+
+        .input::placeholder {
+            color: #6f8794;
+        }
+
+        .select {
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, var(--text-soft) 50%),
+                              linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
+            background-position: calc(100% - 15px) calc(1em + 1px), calc(100% - 10px) calc(1em + 1px);
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+            padding-right: 1.8rem;
         }
 
         .btn {
-            padding: 0.5rem 1rem;
-            background: var(--accent);
-            border: none;
-            border-radius: 6px;
-            color: white;
             cursor: pointer;
-            transition: all 0.2s;
+            color: var(--text-main);
+            background: linear-gradient(140deg, #1e3a48, #17303e);
+            border-color: #2f5261;
+            min-height: 40px;
+            padding: 0.55rem 0.85rem;
+            font-weight: 500;
+            transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
         }
 
         .btn:hover {
-            opacity: 0.9;
+            transform: translateY(-1px);
+            filter: brightness(1.1);
         }
 
-        .btn-secondary {
-            background: var(--bg-tertiary);
+        .btn:active {
+            transform: translateY(0);
         }
 
-        /* Dialogue Display */
-        .dialogue-container {
+        .btn-hot {
+            background: linear-gradient(140deg, #ff6b35, #d84d1e);
+            border-color: #f58f68;
+            color: #1b0903;
+            font-weight: 700;
+        }
+
+        .btn-cool {
+            background: linear-gradient(140deg, #2ec4b6, #1a9f93);
+            border-color: #83e9df;
+            color: #03211d;
+            font-weight: 700;
+        }
+
+        .btn-subtle {
+            background: #182a35;
+            border-color: #34525f;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            min-height: calc(100vh - 122px);
+        }
+
+        .panel {
+            padding: 1rem;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.9rem;
+            min-height: 0;
         }
 
-        .dialogue-line {
-            background: var(--bg-tertiary);
+        .panel h2 {
+            font-size: 1rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .panel-header p {
+            color: var(--text-soft);
+            font-size: 0.82rem;
+        }
+
+        .season-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .tab-btn {
+            background: #1a303c;
+            border: 1px solid #345462;
+            border-radius: 999px;
+            color: var(--text-soft);
+            font-size: 0.82rem;
+            padding: 0.34rem 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(130deg, #ff6b35, #e95d2a);
+            color: #1f0d06;
+            border-color: #ffba9f;
+            font-weight: 700;
+        }
+
+        .scene-tools {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-row {
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--text-soft);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .toggle input {
+            accent-color: var(--accent-cool);
+        }
+
+        .scene-tools .input {
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .scroll {
+            overflow: auto;
+            min-height: 0;
+        }
+
+        .scene-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            padding-right: 0.2rem;
+        }
+
+        .scene-row {
+            border: 1px solid #2d4b58;
+            border-radius: var(--radius-md);
+            background: #132532;
+            padding: 0.65rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .scene-row strong {
+            font-size: 0.93rem;
+            word-break: break-word;
+        }
+
+        .timeline-index {
+            color: var(--accent-gold);
+            font-family: "IBM Plex Mono", monospace;
+            margin-right: 0.35rem;
+        }
+
+        .scene-row.inaccessible {
+            opacity: 0.48;
+            background: #1f2930;
+            border-color: #4e5e68;
+        }
+
+        .scene-meta {
+            color: var(--text-soft);
+            font-size: 0.76rem;
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .scene-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.35rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            filter: none;
+        }
+
+        .preview-empty {
+            color: var(--text-soft);
+            border: 1px dashed #365566;
+            border-radius: var(--radius-md);
             padding: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.6rem;
+        }
+
+        .stat {
+            border: 1px solid #355362;
+            border-radius: var(--radius-sm);
+            padding: 0.55rem;
+            background: #132430;
+        }
+
+        .stat .label {
+            color: var(--text-soft);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat .value {
+            margin-top: 0.2rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .preview-block {
+            border: 1px solid #2f4f5e;
+            border-radius: var(--radius-md);
+            background: #11212d;
+            padding: 0.7rem;
+            margin-bottom: 0.7rem;
+        }
+
+        .preview-block h3 {
+            font-size: 0.86rem;
+            margin-bottom: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-gold);
+        }
+
+        .line {
+            border: 1px solid #2b4858;
+            background: #162938;
+            border-radius: var(--radius-sm);
+            padding: 0.6rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .line .speaker {
+            color: var(--accent-cool);
+            font-weight: 700;
+            font-size: 0.84rem;
+        }
+
+        .line .text {
+            margin-top: 0.3rem;
+            line-height: 1.42;
+            font-size: 0.91rem;
+        }
+
+        .line .meta {
+            margin-top: 0.3rem;
+            color: var(--text-soft);
+            font-size: 0.73rem;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .line.line-muted {
+            opacity: 0.52;
+        }
+
+        .choice-chip,
+        .jump-chip {
+            display: inline-block;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.73rem;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            margin-right: 0.35rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .choice-chip {
+            background: #3f3615;
+            border: 1px solid #685726;
+            color: #ffd86a;
+        }
+
+        .jump-chip {
+            background: #352014;
+            border: 1px solid #6a3d27;
+            color: #ffad88;
+            cursor: pointer;
+        }
+
+        .jump-chip.jump-muted {
+            opacity: 0.45;
+            border-style: dashed;
+        }
+
+        .builder-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+        }
+
+        .builder {
+            border: 1px solid #304e5d;
+            border-radius: var(--radius-md);
+            background: #122430;
+            padding: 0.65rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            min-height: 260px;
+        }
+
+        .builder-title {
+            display: flex;
+            gap: 0.45rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .builder-title .input {
+            width: 100%;
+        }
+
+        .builder-hint {
+            color: var(--text-soft);
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+
+        .sequence {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            overflow: auto;
+            min-height: 120px;
+            max-height: 520px;
+            padding-right: 0.1rem;
+        }
+
+        .sequence-item {
+            border: 1px solid #2c4958;
+            border-radius: var(--radius-sm);
+            background: #182d3a;
+            padding: 0.45rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .story-divider {
+            border: 1px solid #3b5c6c;
             border-radius: 8px;
-            border-left: 4px solid var(--accent);
+            background: #1a3342;
+            color: #b7ced9;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.74rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding: 0.34rem 0.5rem;
         }
 
-        .dialogue-speaker {
-            font-weight: bold;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
+        .sequence-item.inaccessible {
+            opacity: 0.5;
+            border-color: #5a6770;
         }
 
-        .dialogue-text {
-            line-height: 1.6;
+        .sequence-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
         }
 
-        .dialogue-meta {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
+        .sequence-label {
+            font-size: 0.83rem;
+            word-break: break-word;
         }
 
-        /* Choices */
-        .choice-container {
-            background: var(--bg-tertiary);
-            padding: 1rem;
+        .sequence-label .index {
+            color: var(--accent-gold);
+            font-family: "IBM Plex Mono", monospace;
+            margin-right: 0.35rem;
+        }
+
+        .sequence-controls {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .scene-section {
+            border: 1px solid #2d4a59;
             border-radius: 8px;
-            margin: 1rem 0;
-            border: 2px solid var(--warning);
+            background: #142837;
+            padding: 0.45rem;
+            margin-top: 0.35rem;
         }
 
-        .choice-title {
-            color: var(--warning);
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        .scene-section h4 {
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-gold);
+            margin-bottom: 0.32rem;
+        }
+
+        .condition-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-top: 0.28rem;
+        }
+
+        .condition-chip {
+            display: inline-block;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.68rem;
+            border-radius: 999px;
+            padding: 0.12rem 0.45rem;
+            border: 1px solid #566f1f;
+            background: #253314;
+            color: #cce18e;
+        }
+
+        .condition-event {
+            border: 1px solid #36586b;
+            border-radius: 8px;
+            background: #162b3b;
+            padding: 0.35rem 0.45rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .condition-event .kind {
+            color: var(--accent-cool);
+            font-weight: 700;
+            font-size: 0.72rem;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .condition-event .meta {
+            margin-top: 0.2rem;
+            color: var(--text-soft);
+            font-size: 0.7rem;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .choice-event {
+            border: 1px solid #345767;
+            border-radius: 8px;
+            background: #152a39;
+            padding: 0.4rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .choice-event.inactive {
+            border-color: #5f5e49;
+            background: #2a2a20;
+        }
+
+        .choice-header {
+            font-size: 0.72rem;
+            font-family: "IBM Plex Mono", monospace;
+            color: #98bdce;
+        }
+
+        .choice-option-list {
+            margin: 0.36rem 0 0 1.05rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
         }
 
         .choice-option {
-            padding: 0.5rem;
-            margin: 0.25rem 0;
-            background: var(--bg-secondary);
-            border-radius: 4px;
-        }
-
-        /* Compare Panel */
-        .compare-panel {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            overflow-y: auto;
-        }
-
-        .compare-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .compare-section h3 {
-            color: var(--accent);
-            margin-bottom: 1rem;
-        }
-
-        .diff-only-1 {
-            border-left-color: var(--danger);
-        }
-
-        .diff-only-2 {
-            border-left-color: var(--success);
-        }
-
-        .diff-common {
-            border-left-color: var(--warning);
-        }
-
-        .stats {
-            background: var(--bg-tertiary);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .stat-row {
             display: flex;
-            justify-content: space-between;
-            padding: 0.25rem 0;
+            flex-direction: column;
+            gap: 0.15rem;
+            font-size: 0.79rem;
         }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Jumps */
-        .jump-indicator {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            background: var(--danger);
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-left: 0.5rem;
-        }
-
-        .jump-link {
-            color: var(--accent);
+        .choice-option-select {
+            width: 100%;
+            text-align: left;
+            border: 1px solid #3b5f72;
+            border-radius: 8px;
+            background: #173141;
+            color: var(--text-main);
+            padding: 0.4rem 0.5rem;
             cursor: pointer;
-            text-decoration: underline;
+            display: flex;
+            flex-direction: column;
+            gap: 0.16rem;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
 
-        /* Conditions */
-        .condition-badge {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            background: var(--warning);
-            color: #000;
-            border-radius: 4px;
+        .choice-option-select:hover {
+            border-color: #8bb9d0;
+            background: #1a394d;
+        }
+
+        .choice-option-select.inactive,
+        .choice-option-select:disabled {
+            border-color: #5c6156;
+            background: #2a2e2a;
+            color: #9aa79f;
+            cursor: not-allowed;
+        }
+
+        .choice-option-select.inactive:hover,
+        .choice-option-select:disabled:hover {
+            border-color: #5c6156;
+            background: #2a2e2a;
+        }
+
+        .choice-option-select.selected {
+            border-color: #ffd166;
+            background: #3c3417;
+        }
+
+        .choice-option-select.selected.inactive,
+        .choice-option-select.selected:disabled {
+            border-color: #b8a264;
+            background: #3a3628;
+        }
+
+        .choice-option .option-text {
+            line-height: 1.35;
+        }
+
+        .choice-option .option-meta {
+            color: var(--text-soft);
+            font-size: 0.68rem;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .jump-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.32rem;
+        }
+
+        .event-empty {
+            color: var(--text-soft);
+            border: 1px dashed #3a596a;
+            border-radius: 8px;
+            padding: 0.42rem;
+            font-size: 0.76rem;
+        }
+
+        .mini-btn {
+            border-radius: 8px;
+            border: 1px solid #385768;
+            background: #1a3140;
+            color: var(--text-main);
+            font-size: 0.72rem;
+            padding: 0.22rem 0.43rem;
+            cursor: pointer;
+        }
+
+        .summary {
+            border-top: 1px solid #315061;
+            padding-top: 0.5rem;
+            color: var(--text-soft);
+            font-size: 0.78rem;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .compare-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .compare-results {
+            border: 1px solid #315364;
+            border-radius: var(--radius-md);
+            background: #11212d;
+            padding: 0.75rem;
+            overflow: auto;
+            min-height: 160px;
+            max-height: 50vh;
+        }
+
+        .compare-meta {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.55rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric {
+            border: 1px solid #325465;
+            border-radius: var(--radius-sm);
+            background: #152938;
+            padding: 0.55rem;
+        }
+
+        .metric .label {
+            color: var(--text-soft);
             font-size: 0.7rem;
-            margin-left: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metric .value {
+            margin-top: 0.15rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .diff-overview {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-top: 0.75rem;
+        }
+
+        .diff-hunk {
+            border: 1px solid #345260;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: #132530;
+        }
+
+        .diff-hunk-header {
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.74rem;
+            color: #9fc8da;
+            background: #1b3442;
+            border-bottom: 1px solid #355667;
+            padding: 0.34rem 0.5rem;
+        }
+
+        .diff-row {
+            display: grid;
+            grid-template-columns: 52px 52px 1fr;
+            gap: 0;
+            border-bottom: 1px solid #203947;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 0.76rem;
+        }
+
+        .diff-row:last-child {
+            border-bottom: none;
+        }
+
+        .diff-row.add {
+            background: #132e21;
+        }
+
+        .diff-row.remove {
+            background: #321b22;
+        }
+
+        .diff-row.context {
+            background: #142732;
+        }
+
+        .diff-row .num {
+            color: #7f9aa8;
+            border-right: 1px solid #27404d;
+            padding: 0.35rem 0.45rem;
+            text-align: right;
+            user-select: none;
+        }
+
+        .diff-row .content {
+            padding: 0.35rem 0.5rem;
+            min-width: 0;
+        }
+
+        .diff-row .line-main {
+            display: block;
+            color: #d7e6ed;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .diff-row .line-main .prefix {
+            display: inline-block;
+            width: 1.2rem;
+            color: #9eb8c7;
+        }
+
+        .diff-row.add .line-main .prefix {
+            color: #76e4b2;
+        }
+
+        .diff-row.remove .line-main .prefix {
+            color: #ff9ba2;
+        }
+
+        .diff-row .line-meta {
+            display: block;
+            margin-top: 0.2rem;
+            color: #83a0af;
+            font-size: 0.67rem;
+        }
+
+        .group {
+            margin-bottom: 0.8rem;
+            border: 1px solid #304f5e;
+            border-radius: var(--radius-sm);
+            background: #132631;
+            padding: 0.6rem;
+        }
+
+        .group h3 {
+            font-size: 0.84rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .group-hot h3 {
+            color: #ff9b78;
+        }
+
+        .group-cool h3 {
+            color: #7ce5da;
+        }
+
+        .group-gold h3 {
+            color: #ffd166;
+        }
+
+        .empty,
+        .notice,
+        .error {
+            border-radius: var(--radius-sm);
+            padding: 0.6rem;
+            font-size: 0.84rem;
+        }
+
+        .empty,
+        .notice {
+            border: 1px dashed #365666;
+            color: var(--text-soft);
+            background: #12232f;
+        }
+
+        .error {
+            border: 1px solid #7b3940;
+            background: #331b20;
+            color: #ffb7c2;
+        }
+
+        .mono {
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        @media (max-width: 1000px) {
+            .layout {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .builder-grid,
+            .compare-meta,
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scene-actions {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <h2>📚 Scenes</h2>
-            
-            <div class="season-selector">
-                <button class="season-btn active" data-season="Season_1">Season 1</button>
-                <button class="season-btn" data-season="Season_2">Season 2</button>
+    <div class="shell">
+        <header class="topbar card">
+            <div class="headline">
+                <h1>Playthrough Lab</h1>
+                <p>Auto-load every scene from every chapter and season, then compare full-story streams.</p>
             </div>
-
-            <div id="sceneList" class="scene-list">
-                <div class="loading">Loading scenes...</div>
+            <div class="toolbar">
+                <button id="refresh-btn" class="btn btn-subtle" type="button">Refresh Data</button>
             </div>
-        </aside>
+        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="header">
-                <h1 id="sceneTitle">Select a Scene</h1>
-                <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search dialogue...">
-                    <button class="btn" onclick="searchDialogue()">🔍</button>
-                    <button class="btn btn-secondary" onclick="refreshData()">🔄</button>
+        <main class="layout">
+            <section class="panel card playthrough-lab">
+                <div class="panel-header">
+                    <h2>Full Story Streams</h2>
+                    <p class="mono">Pre-compare view shows scenes, choices, and conditions only</p>
                 </div>
-            </div>
 
-            <div id="contentArea">
-                <div class="loading">Select a scene from the sidebar to view its content</div>
-            </div>
+                <div class="builder-grid">
+                    <article class="builder" id="left-builder">
+                        <div class="builder-title">
+                            <input id="left-name" class="input" type="text" maxlength="50" placeholder="Left playthrough name">
+                        </div>
+                        <p class="builder-hint mono">Auto-loaded full story. Pick choice options here to define this side's variable path.</p>
+                        <ul id="left-sequence" class="sequence"></ul>
+                        <div id="left-summary" class="summary"></div>
+                    </article>
+
+                    <article class="builder" id="right-builder">
+                        <div class="builder-title">
+                            <input id="right-name" class="input" type="text" maxlength="50" placeholder="Right playthrough name">
+                        </div>
+                        <p class="builder-hint mono">Auto-loaded full story. Pick different options here to create branch differences.</p>
+                        <ul id="right-sequence" class="sequence"></ul>
+                        <div id="right-summary" class="summary"></div>
+                    </article>
+                </div>
+
+                <div class="compare-actions">
+                    <button id="compare-playthroughs-btn" class="btn btn-hot" type="button">Compare Playthroughs</button>
+                    <button id="copy-left-to-right-btn" class="btn btn-subtle" type="button">Copy Left to Right</button>
+                    <button id="copy-right-to-left-btn" class="btn btn-subtle" type="button">Copy Right to Left</button>
+                    <button id="clear-playthroughs-btn" class="btn btn-subtle" type="button">Reload Full Story</button>
+                </div>
+
+                <div id="compare-results" class="compare-results">
+                    <div class="notice">The full story is loaded on both sides. Click Compare Playthroughs.</div>
+                </div>
+            </section>
         </main>
-
-        <!-- Compare Panel -->
-        <aside class="compare-panel">
-            <h2>⚖️ Compare</h2>
-            
-            <div class="compare-section">
-                <h3>Scene 1</h3>
-                <select id="compare1Season" class="search-input" style="width: 100%; margin-bottom: 0.5rem;">
-                    <option value="Season_1">Season 1</option>
-                    <option value="Season_2">Season 2</option>
-                </select>
-                <select id="compare1Label" class="search-input" style="width: 100%;">
-                    <option value="">Select scene...</option>
-                </select>
-            </div>
-
-            <div class="compare-section">
-                <h3>Scene 2</h3>
-                <select id="compare2Season" class="search-input" style="width: 100%; margin-bottom: 0.5rem;">
-                    <option value="Season_1">Season 1</option>
-                    <option value="Season_2">Season 2</option>
-                </select>
-                <select id="compare2Label" class="search-input" style="width: 100%;">
-                    <option value="">Select scene...</option>
-                </select>
-            </div>
-
-            <button class="btn" style="width: 100%;" onclick="compareScenes()">Compare</button>
-
-            <div id="compareResults" style="margin-top: 1.5rem;"></div>
-        </aside>
     </div>
 
     <script>
-        let currentSeason = 'Season_1';
-        let scenes = {};
-        let labels = {};
+        const STORAGE_KEY = 'sg_playthrough_lab_v1';
 
-        // Initialize
+        const state = {
+            timeline: [],
+            sceneSummaryByKey: {},
+            sceneDetailByKey: {},
+            playthroughs: {
+                left: {
+                    name: 'Route Alpha',
+                    scenes: [],
+                    choice_selections: {},
+                    choice_states: {},
+                    scene_states: {},
+                    selected_choice_count: 0,
+                    active_scene_count: 0,
+                    inactive_scene_count: 0
+                },
+                right: {
+                    name: 'Route Beta',
+                    scenes: [],
+                    choice_selections: {},
+                    choice_states: {},
+                    scene_states: {},
+                    selected_choice_count: 0,
+                    active_scene_count: 0,
+                    inactive_scene_count: 0
+                }
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
-            loadScenes(currentSeason);
-            setupEventListeners();
+            bindEvents();
+            initialize().catch(error => {
+                setCompareError(`Initialization failed: ${error.message}`);
+            });
         });
 
-        function setupEventListeners() {
-            // Season buttons
-            document.querySelectorAll('.season-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentSeason = btn.dataset.season;
-                    loadScenes(currentSeason);
+        function bindEvents() {
+            document.getElementById('left-name').addEventListener('input', event => {
+                state.playthroughs.left.name = event.target.value.trim() || 'Route Alpha';
+                persistPlaythroughs();
+                renderPlaythrough('left');
+            });
+
+            document.getElementById('right-name').addEventListener('input', event => {
+                state.playthroughs.right.name = event.target.value.trim() || 'Route Beta';
+                persistPlaythroughs();
+                renderPlaythrough('right');
+            });
+
+            document.getElementById('compare-playthroughs-btn').addEventListener('click', comparePlaythroughs);
+
+            document.getElementById('copy-left-to-right-btn').addEventListener('click', async () => {
+                await copyPlaythrough('left', 'right');
+                setCompareNotice('Copied left playthrough to the right side.');
+            });
+
+            document.getElementById('copy-right-to-left-btn').addEventListener('click', async () => {
+                await copyPlaythrough('right', 'left');
+                setCompareNotice('Copied right playthrough to the left side.');
+            });
+
+            document.getElementById('clear-playthroughs-btn').addEventListener('click', async () => {
+                syncPlaythroughsToWholeStory();
+                await renderPlaythrough('left');
+                await renderPlaythrough('right');
+                persistPlaythroughs();
+                setCompareNotice('Both sides were reloaded with the full story.');
+            });
+
+            ['left', 'right'].forEach(side => {
+                document.getElementById(`${side}-sequence`).addEventListener('click', async event => {
+                    const optionButton = event.target.closest('button[data-choice-action="select-option"]');
+                    if (!optionButton) {
+                        return;
+                    }
+
+                    if (optionButton.disabled) {
+                        return;
+                    }
+
+                    const choiceKey = String(optionButton.dataset.choiceKey || '').trim();
+                    const optionIndex = Number(optionButton.dataset.optionIndex);
+                    const optionActive = String(optionButton.dataset.optionActive || '1') === '1';
+                    if (!choiceKey || Number.isNaN(optionIndex) || optionIndex < 0) {
+                        return;
+                    }
+
+                    if (!optionActive) {
+                        return;
+                    }
+
+                    if (!state.playthroughs[side].choice_selections || typeof state.playthroughs[side].choice_selections !== 'object') {
+                        state.playthroughs[side].choice_selections = {};
+                    }
+
+                    state.playthroughs[side].choice_selections[choiceKey] = optionIndex;
+                    persistPlaythroughs();
+                    await renderPlaythrough(side);
                 });
             });
 
-            // Search on Enter
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') searchDialogue();
-            });
+            document.getElementById('refresh-btn').addEventListener('click', refreshData);
         }
 
-        async function loadScenes(season) {
-            const sceneList = document.getElementById('sceneList');
-            sceneList.innerHTML = '<div class="loading">Loading...</div>';
+        async function initialize() {
+            restorePlaythroughs();
+            await loadTimeline();
+            await loadAllSceneDetails();
+            syncPlaythroughsToWholeStory();
+            document.getElementById('left-name').value = state.playthroughs.left.name;
+            document.getElementById('right-name').value = state.playthroughs.right.name;
+            await renderPlaythrough('left');
+            await renderPlaythrough('right');
+            setCompareNotice('Loaded full story on both sides. Click Compare Playthroughs.');
+        }
 
-            try {
-                const response = await fetch(`/api/season/${season}`);
-                scenes = await response.json();
-                
-                sceneList.innerHTML = '';
-                
-                const sortedScenes = Object.keys(scenes).sort();
-                
-                sortedScenes.forEach(label => {
-                    const scene = scenes[label];
-                    const item = document.createElement('li');
-                    item.className = 'scene-item';
-                    item.innerHTML = `
-                        <div>${label}</div>
-                        <div class="scene-meta">
-                            💬 ${scene.dialogues?.length || 0} 
-                            🎯 ${scene.choices?.length || 0} 
-                            ➡️ ${scene.jumps?.length || 0}
-                        </div>
-                    `;
-                    item.addEventListener('click', () => loadScene(season, label));
-                    sceneList.appendChild(item);
-                });
+        async function loadTimeline() {
+            const timeline = await fetchJson('/api/timeline');
+            if (!Array.isArray(timeline) || timeline.length === 0) {
+                throw new Error('Timeline is empty. Refresh extraction and try again.');
+            }
 
-                // Update compare dropdowns
-                updateCompareDropdowns();
-
-            } catch (error) {
-                sceneList.innerHTML = `<div class="loading">Error loading scenes: ${error.message}</div>`;
+            state.timeline = timeline;
+            state.sceneSummaryByKey = {};
+            for (const entry of state.timeline) {
+                state.sceneSummaryByKey[sceneKey(entry.season, entry.label)] = entry;
             }
         }
 
-        async function loadScene(season, label) {
-            const contentArea = document.getElementById('contentArea');
-            const sceneTitle = document.getElementById('sceneTitle');
-            
-            // Highlight active scene
-            document.querySelectorAll('.scene-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.textContent.includes(label)) item.classList.add('active');
-            });
+        async function loadAllSceneDetails() {
+            const data = await fetchJson('/api/data');
+            const seasons = (data && typeof data === 'object' && data.seasons && typeof data.seasons === 'object')
+                ? data.seasons
+                : {};
 
-            sceneTitle.textContent = `${season}: ${label}`;
-            contentArea.innerHTML = '<div class="loading">Loading scene...</div>';
-
-            try {
-                const response = await fetch(`/api/scene/${season}/${label}`);
-                const scene = await response.json();
-
-                let html = '';
-
-                // Stats
-                html += `
-                    <div class="stats">
-                        <div class="stat-row"><span>Dialogues:</span><span>${scene.dialogues?.length || 0}</span></div>
-                        <div class="stat-row"><span>Choices:</span><span>${scene.choices?.length || 0}</span></div>
-                        <div class="stat-row"><span>Jumps:</span><span>${scene.jumps?.length || 0}</span></div>
-                    </div>
-                `;
-
-                // Jumps
-                if (scene.jumps?.length > 0) {
-                    html += '<div class="compare-section"><h3>➡️ Jumps (Scene Transitions)</h3>';
-                    scene.jumps.forEach(jump => {
-                        html += `
-                            <div class="dialogue-line">
-                                <span class="jump-indicator">JUMP</span>
-                                <span class="jump-link" onclick="loadScene('${season}', '${jump.target}')">${jump.target}</span>
-                                <div class="dialogue-meta">Line ${jump.line_number}</div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
+            state.sceneDetailByKey = {};
+            for (const [season, labels] of Object.entries(seasons)) {
+                if (!labels || typeof labels !== 'object') {
+                    continue;
                 }
-
-                // Dialogues
-                if (scene.dialogues?.length > 0) {
-                    html += '<div class="compare-section"><h3>💬 Dialogue</h3><div class="dialogue-container">';
-                    
-                    scene.dialogues.forEach(dlg => {
-                        const conditions = dlg.conditions?.length > 0 
-                            ? `<span class="condition-badge">${dlg.conditions.join(' → ')}</span>` 
-                            : '';
-                        
-                        html += `
-                            <div class="dialogue-line">
-                                <div class="dialogue-speaker">${dlg.speaker}${conditions}</div>
-                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
-                                <div class="dialogue-meta">Line ${dlg.line_number}</div>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div></div>';
+                for (const [label, scene] of Object.entries(labels)) {
+                    state.sceneDetailByKey[sceneKey(season, label)] = scene;
                 }
-
-                // Choices
-                if (scene.choices?.length > 0) {
-                    html += '<div class="compare-section"><h3>🎯 Choices</h3>';
-                    
-                    scene.choices.forEach(choice => {
-                        html += `
-                            <div class="choice-container">
-                                <div class="choice-title">Menu (Line ${choice.line_number})</div>
-                        `;
-                        
-                        choice.options?.forEach(opt => {
-                            const optConditions = opt.conditions?.length > 0 
-                                ? `<span class="condition-badge">${opt.conditions.join(' → ')}</span>` 
-                                : '';
-                            html += `
-                                <div class="choice-option">
-                                    ${escapeHtml(opt.text)}${optConditions}
-                                </div>
-                            `;
-                        });
-                        
-                        html += '</div>';
-                    });
-                    
-                    html += '</div>';
-                }
-
-                contentArea.innerHTML = html || '<div class="loading">No content found</div>';
-
-            } catch (error) {
-                contentArea.innerHTML = `<div class="loading">Error loading scene: ${error.message}</div>`;
             }
         }
 
-        function updateCompareDropdowns() {
-            const sortedLabels = Object.keys(scenes).sort();
-            
-            ['compare1Label', 'compare2Label'].forEach(id => {
-                const select = document.getElementById(id);
-                select.innerHTML = '<option value="">Select scene...</option>';
-                
-                sortedLabels.forEach(label => {
-                    const option = document.createElement('option');
-                    option.value = label;
-                    option.textContent = label;
-                    select.appendChild(option);
-                });
-            });
+        function buildWholeStorySceneRefs() {
+            return state.timeline.map(entry => ({
+                season: String(entry.season),
+                label: String(entry.label)
+            }));
         }
 
-        async function compareScenes() {
-            const season1 = document.getElementById('compare1Season').value;
-            const label1 = document.getElementById('compare1Label').value;
-            const season2 = document.getElementById('compare2Season').value;
-            const label2 = document.getElementById('compare2Label').value;
+        function syncPlaythroughsToWholeStory() {
+            const fullStory = buildWholeStorySceneRefs();
+            if (!state.playthroughs.left.choice_selections || typeof state.playthroughs.left.choice_selections !== 'object') {
+                state.playthroughs.left.choice_selections = {};
+            }
+            if (!state.playthroughs.right.choice_selections || typeof state.playthroughs.right.choice_selections !== 'object') {
+                state.playthroughs.right.choice_selections = {};
+            }
+            state.playthroughs.left.choice_states = {};
+            state.playthroughs.right.choice_states = {};
+            state.playthroughs.left.scene_states = {};
+            state.playthroughs.right.scene_states = {};
+            state.playthroughs.left.selected_choice_count = 0;
+            state.playthroughs.right.selected_choice_count = 0;
+            state.playthroughs.left.active_scene_count = 0;
+            state.playthroughs.right.active_scene_count = 0;
+            state.playthroughs.left.inactive_scene_count = 0;
+            state.playthroughs.right.inactive_scene_count = 0;
+            state.playthroughs.left.scenes = fullStory.map(scene => ({ ...scene }));
+            state.playthroughs.right.scenes = fullStory.map(scene => ({ ...scene }));
+        }
 
-            if (!label1 || !label2) {
-                alert('Please select both scenes to compare');
+        async function copyPlaythrough(sourceSide, targetSide) {
+            const source = state.playthroughs[sourceSide];
+            if (!source || typeof source !== 'object') {
                 return;
             }
 
-            const resultsDiv = document.getElementById('compareResults');
-            resultsDiv.innerHTML = '<div class="loading">Comparing...</div>';
+            const targetDefaultName = targetSide === 'left' ? 'Route Alpha' : 'Route Beta';
+            const sourceScenes = Array.isArray(source.scenes) ? source.scenes : [];
+            const sourceSelections = (source.choice_selections && typeof source.choice_selections === 'object')
+                ? source.choice_selections
+                : {};
+            const copiedSelections = {};
+            for (const [key, value] of Object.entries(sourceSelections)) {
+                const parsed = Number(value);
+                if (!Number.isInteger(parsed) || parsed < 0) {
+                    continue;
+                }
+                copiedSelections[String(key)] = parsed;
+            }
 
-            try {
-                const response = await fetch('/api/compare', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ season1, label1, season2, label2 })
-                });
+            state.playthroughs[targetSide] = {
+                name: String(source.name || targetDefaultName).trim() || targetDefaultName,
+                scenes: sourceScenes.map(scene => ({ ...scene })),
+                choice_selections: copiedSelections,
+                choice_states: {},
+                scene_states: {},
+                selected_choice_count: 0,
+                active_scene_count: 0,
+                inactive_scene_count: 0
+            };
 
-                const result = await response.json();
+            document.getElementById(`${targetSide}-name`).value = state.playthroughs[targetSide].name;
+            persistPlaythroughs();
+            await renderPlaythrough(targetSide);
+        }
 
-                let html = `
-                    <div class="stats">
-                        <div class="stat-row"><span>Scene 1 dialogues:</span><span>${result.scene1_info.total_dialogues}</span></div>
-                        <div class="stat-row"><span>Scene 2 dialogues:</span><span>${result.scene2_info.total_dialogues}</span></div>
-                        <div class="stat-row"><span>Common:</span><span>${result.common.length}</span></div>
-                        <div class="stat-row"><span>Only in Scene 1:</span><span>${result.only_in_first.length}</span></div>
-                        <div class="stat-row"><span>Only in Scene 2:</span><span>${result.only_in_second.length}</span></div>
-                    </div>
-                `;
+        function sceneKey(season, label) {
+            return `${season}::${label}`;
+        }
 
-                if (result.only_in_first.length > 0) {
-                    html += '<div class="compare-section"><h3 style="color: var(--danger)">Only in Scene 1</h3>';
-                    result.only_in_first.slice(0, 20).forEach(dlg => {
-                        html += `
-                            <div class="dialogue-line diff-only-1">
-                                <div class="dialogue-speaker">${dlg.speaker}</div>
-                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
-                            </div>
-                        `;
-                    });
-                    if (result.only_in_first.length > 20) {
-                        html += `<div class="loading">... and ${result.only_in_first.length - 20} more</div>`;
-                    }
-                    html += '</div>';
+        function getSceneDetail(season, label) {
+            return state.sceneDetailByKey[sceneKey(season, label)] || null;
+        }
+
+        async function ensureSceneDetail(season, label) {
+            const key = sceneKey(season, label);
+            if (state.sceneDetailByKey[key]) {
+                return state.sceneDetailByKey[key];
+            }
+
+            const scene = await fetchJson(`/api/scene/${encodeURIComponent(season)}/${encodeURIComponent(label)}`);
+            state.sceneDetailByKey[key] = scene;
+            return scene;
+        }
+
+        async function hydratePlaythroughSceneDetails(side) {
+            const playthrough = state.playthroughs[side];
+            const pending = [];
+            const queued = new Set();
+
+            for (const sceneRef of playthrough.scenes) {
+                if (!sceneRef || !sceneRef.season || !sceneRef.label) {
+                    continue;
                 }
 
-                if (result.only_in_second.length > 0) {
-                    html += '<div class="compare-section"><h3 style="color: var(--success)">Only in Scene 2</h3>';
-                    result.only_in_second.slice(0, 20).forEach(dlg => {
-                        html += `
-                            <div class="dialogue-line diff-only-2">
-                                <div class="dialogue-speaker">${dlg.speaker}</div>
-                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
-                            </div>
-                        `;
-                    });
-                    if (result.only_in_second.length > 20) {
-                        html += `<div class="loading">... and ${result.only_in_second.length - 20} more</div>`;
-                    }
-                    html += '</div>';
+                const key = sceneKey(sceneRef.season, sceneRef.label);
+                if (queued.has(key)) {
+                    continue;
                 }
 
-                resultsDiv.innerHTML = html || '<div class="loading">No differences found</div>';
+                if (getSceneDetail(sceneRef.season, sceneRef.label)) {
+                    queued.add(key);
+                    continue;
+                }
 
-            } catch (error) {
-                resultsDiv.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+                queued.add(key);
+                pending.push(
+                    ensureSceneDetail(sceneRef.season, sceneRef.label).catch(() => null)
+                );
+            }
+
+            if (pending.length > 0) {
+                await Promise.all(pending);
             }
         }
 
-        async function searchDialogue() {
-            const query = document.getElementById('searchInput').value;
-            if (!query) return;
+        async function loadPlaythroughPreview(side) {
+            const playthrough = state.playthroughs[side];
+            const payload = {
+                playthrough: {
+                    name: playthrough.name,
+                    scenes: Array.isArray(playthrough.scenes) ? playthrough.scenes : [],
+                    choice_selections: playthrough.choice_selections || {}
+                }
+            };
 
-            const contentArea = document.getElementById('contentArea');
-            const sceneTitle = document.getElementById('sceneTitle');
-            
-            sceneTitle.textContent = `Search: "${query}"`;
-            contentArea.innerHTML = '<div class="loading">Searching...</div>';
+            const preview = await fetchJson('/api/playthrough/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            playthrough.choice_states = (preview && typeof preview.choice_states === 'object')
+                ? preview.choice_states
+                : {};
+            playthrough.scene_states = (preview && typeof preview.scene_states === 'object')
+                ? preview.scene_states
+                : {};
+            playthrough.selected_choice_count = Number(preview.selected_choice_count || 0);
+            playthrough.active_scene_count = Number(preview.active_scene_count || 0);
+            playthrough.inactive_scene_count = Number(preview.inactive_scene_count || 0);
+
+            return preview;
+        }
+
+        function normalizeConditionList(conditions) {
+            if (!Array.isArray(conditions)) {
+                return [];
+            }
+
+            const seen = new Set();
+            const normalized = [];
+
+            for (const value of conditions) {
+                const text = String(value || '').trim();
+                if (!text || seen.has(text)) {
+                    continue;
+                }
+                seen.add(text);
+                normalized.push(text);
+            }
+
+            return normalized;
+        }
+
+        function renderConditionTags(conditions) {
+            if (!conditions.length) {
+                return '';
+            }
+
+            return `<div class="condition-row">${conditions.map(condition => `<span class="condition-chip">${escapeHtml(condition)}</span>`).join('')}</div>`;
+        }
+
+        function buildChoiceSelectionKey(season, label, choiceIndex) {
+            return `${season}::${label}::${choiceIndex}`;
+        }
+
+        function selectedOptionIndexForChoice(side, sceneRef, choiceIndex, optionCount) {
+            const key = buildChoiceSelectionKey(sceneRef.season, sceneRef.label, choiceIndex);
+            const rawValue = state.playthroughs[side]?.choice_selections?.[key];
+            const parsed = Number(rawValue);
+
+            if (Number.isInteger(parsed) && parsed >= 0 && parsed < optionCount) {
+                return parsed;
+            }
+
+            return 0;
+        }
+
+        function getSceneSummary(season, label) {
+            return state.sceneSummaryByKey[sceneKey(season, label)] || null;
+        }
+
+        function renderSceneConditionSection(sceneConditions) {
+            if (!Array.isArray(sceneConditions) || sceneConditions.length === 0) {
+                return '<div class="event-empty">No explicit condition blocks found in this scene.</div>';
+            }
+
+            return sceneConditions.map(condition => {
+                const blockType = String(condition.block_type || 'if').toUpperCase();
+                const conditionText = String(condition.condition || '').trim() || 'else';
+                const lineNumber = condition.line_number ?? '-';
+
+                return `
+                    <div class="condition-event">
+                        <div class="kind">${escapeHtml(blockType)} ${escapeHtml(conditionText)}</div>
+                        <div class="meta">line ${escapeHtml(String(lineNumber))}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSceneChoiceSection(choices, side, sceneRef, choiceStates) {
+            if (!Array.isArray(choices) || choices.length === 0) {
+                return '<div class="event-empty">No menu choices in this scene.</div>';
+            }
+
+            const stateMap = (choiceStates && typeof choiceStates === 'object') ? choiceStates : {};
+
+            return choices.map((choice, choiceIndex) => {
+                const lineNumber = choice.line_number ?? '-';
+                const menuConditions = normalizeConditionList(choice.conditions);
+                const options = Array.isArray(choice.options) ? choice.options : [];
+                const choiceKey = buildChoiceSelectionKey(sceneRef.season, sceneRef.label, choiceIndex);
+                const choiceState = stateMap[choiceKey] || {};
+                const hasChoiceState = Object.keys(choiceState).length > 0;
+                const parentBranchActive = choiceState.parent_branch_active !== false;
+                const choiceActive = choiceState.active !== false;
+
+                const selectedFromPreview = Number(choiceState.selected_option_index);
+                const selectedOptionIndex = Number.isInteger(selectedFromPreview)
+                    ? selectedFromPreview
+                    : (hasChoiceState ? -1 : selectedOptionIndexForChoice(side, sceneRef, choiceIndex, options.length));
+
+                const nestedReason = !parentBranchActive
+                    ? (choiceState.parent_option_text
+                        ? ` | requires parent option: ${String(choiceState.parent_option_text)}`
+                        : ' | nested branch inactive')
+                    : '';
+                const statusText = choiceActive ? 'active' : 'inactive';
+
+                const optionsMarkup = options.length > 0
+                    ? `<ol class="choice-option-list">${options.map((option, optionIndex) => {
+                        const optionState = Array.isArray(choiceState.options)
+                            ? choiceState.options.find(entry => Number(entry.index) === optionIndex)
+                            : null;
+                        const mergedConditions = normalizeConditionList([
+                            ...menuConditions,
+                            ...(Array.isArray(option.conditions) ? option.conditions : [])
+                        ]);
+                        const optionLine = option.line_number ?? '-';
+                        const isSelected = optionIndex === selectedOptionIndex;
+                        const isOptionActive = optionState ? Boolean(optionState.active) : choiceActive;
+                        const optionStatus = isOptionActive ? 'active' : 'inactive';
+
+                        return `
+                            <li class="choice-option">
+                                <button
+                                    class="choice-option-select ${isSelected ? 'selected' : ''} ${isOptionActive ? '' : 'inactive'}"
+                                    type="button"
+                                    data-choice-action="select-option"
+                                    data-choice-key="${escapeHtml(choiceKey)}"
+                                    data-option-index="${optionIndex}"
+                                    data-option-active="${isOptionActive ? '1' : '0'}"
+                                    ${isOptionActive ? '' : 'disabled'}
+                                >
+                                    <span class="option-text">${optionIndex + 1}. ${escapeHtml(option.text || '(empty option)')}</span>
+                                    <span class="option-meta">line ${escapeHtml(String(optionLine))} | ${optionStatus}${isSelected ? ' | selected' : ''}</span>
+                                </button>
+                                ${renderConditionTags(mergedConditions)}
+                            </li>
+                        `;
+                    }).join('')}</ol>`
+                    : '<div class="event-empty">No parsed options for this choice.</div>';
+
+                return `
+                    <div class="choice-event ${choiceActive ? '' : 'inactive'}">
+                        <div class="choice-header">Choice ${choiceIndex + 1} | line ${escapeHtml(String(lineNumber))} | ${statusText}${escapeHtml(nestedReason)}</div>
+                        ${menuConditions.length > 0 ? renderConditionTags(menuConditions) : ''}
+                        ${optionsMarkup}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function renderPlaythrough(side) {
+            const playthrough = state.playthroughs[side];
+            const list = document.getElementById(`${side}-sequence`);
+            const summary = document.getElementById(`${side}-summary`);
+
+            if (!playthrough.scenes.length) {
+                list.innerHTML = '<li class="empty">No scenes loaded. Click Reload Full Story.</li>';
+                summary.textContent = 'scenes 0 | choices 0 | conditions 0';
+                return;
+            }
+
+            await hydratePlaythroughSceneDetails(side);
 
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                const results = await response.json();
+                await loadPlaythroughPreview(side);
+            } catch (error) {
+                state.playthroughs[side].choice_states = {};
+                state.playthroughs[side].scene_states = {};
+                state.playthroughs[side].selected_choice_count = 0;
+                state.playthroughs[side].active_scene_count = 0;
+                state.playthroughs[side].inactive_scene_count = 0;
+            }
 
-                if (results.length === 0) {
-                    contentArea.innerHTML = '<div class="loading">No results found</div>';
-                    return;
-                }
+            const choiceStates = state.playthroughs[side].choice_states || {};
+            const sceneStates = state.playthroughs[side].scene_states || {};
+            const previewStates = Object.values(choiceStates).filter(item => item && typeof item === 'object');
+            let activeChoiceCount = previewStates.filter(item => item.active !== false).length;
+            let inactiveChoiceCount = Math.max(0, previewStates.length - activeChoiceCount);
 
-                let html = `<div class="stats"><div class="stat-row"><span>Found:</span><span>${results.length} results</span></div></div>`;
-                html += '<div class="dialogue-container">';
+            let totalChoices = 0;
+            let totalConditions = 0;
+            let lastGroupKey = '';
 
-                results.forEach(result => {
-                    html += `
-                        <div class="dialogue-line">
-                            <div class="dialogue-speaker">${result.speaker}</div>
-                            <div class="dialogue-text">${escapeHtml(result.text)}</div>
-                            <div class="dialogue-meta">
-                                ${result.season}: ${result.label} • Line ${result.line_number}
-                                <span class="jump-link" style="margin-left: 1rem;" onclick="loadScene('${result.season}', '${result.label}')">→ View Scene</span>
-                            </div>
+            const rows = playthrough.scenes.map((sceneRef, index) => {
+                const sceneSummary = getSceneSummary(sceneRef.season, sceneRef.label);
+                const sceneState = sceneStates[sceneKey(sceneRef.season, sceneRef.label)] || null;
+                const sceneActive = sceneState ? sceneState.active !== false : true;
+                const sceneData = getSceneDetail(sceneRef.season, sceneRef.label) || {};
+                const chapterName = basename(sceneSummary?.file_path || 'unknown.rpy');
+                const groupKey = `${sceneRef.season}::${chapterName}`;
+                const groupHeader = groupKey !== lastGroupKey
+                    ? `<li class="story-divider">${escapeHtml(sceneRef.season)} | ${escapeHtml(chapterName)}</li>`
+                    : '';
+                lastGroupKey = groupKey;
+
+                const choices = Array.isArray(sceneData.choices) ? sceneData.choices : [];
+                const sceneConditions = Array.isArray(sceneData.conditions) ? sceneData.conditions : [];
+
+                totalChoices += choices.length;
+                totalConditions += sceneConditions.length;
+
+                const branchStateNotice = sceneActive
+                    ? ''
+                    : `
+                        <div class="scene-section">
+                            <h4>Branch State</h4>
+                            <div class="event-empty">Inactive for the current route state.</div>
                         </div>
                     `;
+
+                return `
+                    ${groupHeader}
+                    <li class="sequence-item ${sceneActive ? '' : 'inaccessible'}">
+                        <div class="sequence-row">
+                            <div class="sequence-label">
+                                <span class="index">${index + 1}.</span>
+                                ${escapeHtml(sceneRef.label)}
+                            </div>
+                        </div>
+                        <div class="sequence-row">
+                            <div class="scene-meta">
+                                <span>choice ${choices.length}</span>
+                                <span>cond ${sceneConditions.length}</span>
+                                <span>${sceneActive ? 'active' : 'inactive'}</span>
+                            </div>
+                        </div>
+                        ${branchStateNotice}
+                        <div class="scene-section">
+                            <h4>Conditions</h4>
+                            ${renderSceneConditionSection(sceneConditions)}
+                        </div>
+                        <div class="scene-section">
+                            <h4>Choices</h4>
+                            ${renderSceneChoiceSection(choices, side, sceneRef, choiceStates)}
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            if (previewStates.length === 0) {
+                activeChoiceCount = totalChoices;
+                inactiveChoiceCount = 0;
+            }
+
+            const selectedChoiceCount = Number(state.playthroughs[side].selected_choice_count || 0);
+            const activeSceneCount = Number(state.playthroughs[side].active_scene_count || 0);
+            const inactiveSceneCount = Number(state.playthroughs[side].inactive_scene_count || 0);
+            list.innerHTML = rows;
+            summary.textContent = `scenes ${playthrough.scenes.length} | active scenes ${activeSceneCount} | inactive scenes ${inactiveSceneCount} | choices ${totalChoices} | selected ${selectedChoiceCount} | active choices ${activeChoiceCount} | inactive choices ${inactiveChoiceCount} | conditions ${totalConditions}`;
+        }
+
+        async function comparePlaythroughs() {
+            const left = state.playthroughs.left;
+            const right = state.playthroughs.right;
+
+            if (left.scenes.length === 0 || right.scenes.length === 0) {
+                setCompareError('Both playthroughs need at least one scene before comparison.');
+                return;
+            }
+
+            const resultContainer = document.getElementById('compare-results');
+            resultContainer.innerHTML = '<div class="notice">Comparing playthroughs...</div>';
+
+            try {
+                const result = await fetchJson('/api/playthrough/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        left_playthrough: left,
+                        right_playthrough: right
+                    })
                 });
 
-                html += '</div>';
-                contentArea.innerHTML = html;
-
+                renderComparison(result);
             } catch (error) {
-                contentArea.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+                setCompareError(`Compare failed: ${error.message}`);
             }
+        }
+
+        function renderComparison(result) {
+            const target = document.getElementById('compare-results');
+            const leftInfo = result.left_info || {};
+            const rightInfo = result.right_info || {};
+            const diff = result.diff || {};
+            const overview = diff.overview || {};
+            const hunks = Array.isArray(diff.hunks) ? diff.hunks : [];
+            const missing = result.missing_scenes || {};
+
+            const leftName = leftInfo.name || 'Left';
+            const rightName = rightInfo.name || 'Right';
+
+            const missingLeft = (missing.left || []).map(item => `${item.season} :: ${item.label}`).join(', ');
+            const missingRight = (missing.right || []).map(item => `${item.season} :: ${item.label}`).join(', ');
+            const similarityPercent = Math.round((overview.similarity_ratio || 0) * 10000) / 100;
+
+            const diffMarkup = hunks.length
+                ? `<div class="diff-overview">${hunks.map(hunk => renderDiffHunk(hunk)).join('')}</div>`
+                : '<div class="empty">No content differences found between the two runs.</div>';
+
+            target.innerHTML = `
+                <div class="compare-meta">
+                    <div class="metric">
+                        <div class="label">Unchanged</div>
+                        <div class="value">${overview.unchanged_lines || 0}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Removed</div>
+                        <div class="value">${overview.removed_lines || 0}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Added</div>
+                        <div class="value">${overview.added_lines || 0}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Change Blocks</div>
+                        <div class="value">${overview.change_blocks || 0}</div>
+                    </div>
+                </div>
+
+                <div class="notice mono">
+                    ${escapeHtml(leftName)}: scenes ${leftInfo.resolved_scene_count || 0}/${leftInfo.input_scene_count || 0}, active ${leftInfo.active_scene_count || 0}, inactive ${leftInfo.inactive_scene_count || 0}, dialogues ${leftInfo.total_dialogues || 0}, selected choices ${leftInfo.selected_choice_count || 0}<br>
+                    ${escapeHtml(rightName)}: scenes ${rightInfo.resolved_scene_count || 0}/${rightInfo.input_scene_count || 0}, active ${rightInfo.active_scene_count || 0}, inactive ${rightInfo.inactive_scene_count || 0}, dialogues ${rightInfo.total_dialogues || 0}, selected choices ${rightInfo.selected_choice_count || 0}<br>
+                    Similarity: ${similarityPercent}%
+                </div>
+
+                ${missingLeft ? `<div class="error mono">Missing from ${escapeHtml(leftName)}: ${escapeHtml(missingLeft)}</div>` : ''}
+                ${missingRight ? `<div class="error mono">Missing from ${escapeHtml(rightName)}: ${escapeHtml(missingRight)}</div>` : ''}
+
+                ${diffMarkup}
+                ${diff.truncated ? '<div class="notice">Diff output truncated for performance. Narrow your playthrough range for a fuller view.</div>' : ''}
+            `;
+        }
+
+        function renderDiffHunk(hunk) {
+            const lines = Array.isArray(hunk.lines) ? hunk.lines : [];
+            const rows = lines.map(line => renderDiffRow(line)).join('');
+            return `
+                <section class="diff-hunk">
+                    <div class="diff-hunk-header">${escapeHtml(hunk.header || '@@')}</div>
+                    ${rows}
+                </section>
+            `;
+        }
+
+        function renderDiffRow(line) {
+            const type = line.type || 'context';
+            const klass = type === 'add' ? 'add' : (type === 'remove' ? 'remove' : 'context');
+            const left = line.left || null;
+            const right = line.right || null;
+            const source = right || left || {};
+
+            const leftNumber = left ? left.position : '';
+            const rightNumber = right ? right.position : '';
+
+            let prefix = ' ';
+            if (type === 'add') {
+                prefix = '+';
+            } else if (type === 'remove') {
+                prefix = '-';
+            }
+
+            const speaker = source.speaker || 'Narrator';
+            const text = source.text || '';
+            const lineNumber = source.line_number ?? '-';
+            const location = `${source.season || '?'} :: ${source.label || '?'} | line ${lineNumber}`;
+
+            return `
+                <div class="diff-row ${klass}">
+                    <div class="num">${escapeHtml(String(leftNumber))}</div>
+                    <div class="num">${escapeHtml(String(rightNumber))}</div>
+                    <div class="content">
+                        <span class="line-main"><span class="prefix">${prefix}</span>${escapeHtml(speaker)}: ${escapeHtml(text)}</span>
+                        <span class="line-meta">${escapeHtml(location)}</span>
+                    </div>
+                </div>
+            `;
         }
 
         async function refreshData() {
-            const contentArea = document.getElementById('contentArea');
-            contentArea.innerHTML = '<div class="loading">Refreshing data...</div>';
+            setCompareNotice('Refreshing extracted data...');
 
             try {
-                const response = await fetch('/api/refresh', { method: 'POST' });
-                const result = await response.json();
-                
-                alert(`Data refreshed! Loaded ${result.labels} labels.`);
-                loadScenes(currentSeason);
-                contentArea.innerHTML = '<div class="loading">Select a scene from the sidebar</div>';
+                await fetchJson('/api/refresh', { method: 'POST' });
+                await loadTimeline();
+                await loadAllSceneDetails();
+                syncPlaythroughsToWholeStory();
+                await renderPlaythrough('left');
+                await renderPlaythrough('right');
+
+                setCompareNotice('Data refreshed successfully.');
             } catch (error) {
-                contentArea.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+                setCompareError(`Refresh failed: ${error.message}`);
             }
         }
 
-        function escapeHtml(text) {
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const message = payload.error || `Request failed (${response.status})`;
+                throw new Error(message);
+            }
+
+            return payload;
+        }
+
+        function persistPlaythroughs() {
+            try {
+                const normalizeSelectionMap = (selectionMap) => {
+                    if (!selectionMap || typeof selectionMap !== 'object') {
+                        return {};
+                    }
+
+                    const normalized = {};
+                    for (const [key, value] of Object.entries(selectionMap)) {
+                        const parsed = Number(value);
+                        if (!Number.isInteger(parsed) || parsed < 0) {
+                            continue;
+                        }
+                        normalized[String(key)] = parsed;
+                    }
+                    return normalized;
+                };
+
+                const payload = {
+                    left: {
+                        name: state.playthroughs.left.name || 'Route Alpha',
+                        choice_selections: normalizeSelectionMap(state.playthroughs.left.choice_selections)
+                    },
+                    right: {
+                        name: state.playthroughs.right.name || 'Route Beta',
+                        choice_selections: normalizeSelectionMap(state.playthroughs.right.choice_selections)
+                    }
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('Unable to persist playthroughs:', error);
+            }
+        }
+
+        function restorePlaythroughs() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) {
+                    return;
+                }
+
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') {
+                    return;
+                }
+
+                ['left', 'right'].forEach(side => {
+                    if (!parsed[side] || typeof parsed[side] !== 'object') {
+                        return;
+                    }
+
+                    const name = String(parsed[side].name || '').trim();
+                    const rawSelections = parsed[side].choice_selections;
+                    const choiceSelections = {};
+
+                    if (rawSelections && typeof rawSelections === 'object') {
+                        for (const [key, value] of Object.entries(rawSelections)) {
+                            const parsedValue = Number(value);
+                            if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+                                continue;
+                            }
+                            choiceSelections[String(key)] = parsedValue;
+                        }
+                    }
+
+                    state.playthroughs[side] = {
+                        name: name || (side === 'left' ? 'Route Alpha' : 'Route Beta'),
+                        scenes: [],
+                        choice_selections: choiceSelections,
+                        choice_states: {},
+                        scene_states: {},
+                        selected_choice_count: 0,
+                        active_scene_count: 0,
+                        inactive_scene_count: 0
+                    };
+                });
+            } catch (error) {
+                console.warn('Unable to restore playthroughs:', error);
+            }
+        }
+
+        function basename(path) {
+            return String(path || '').split(/[/\\]/).pop() || 'unknown.rpy';
+        }
+
+        function setCompareNotice(message) {
+            document.getElementById('compare-results').innerHTML = `<div class="notice">${escapeHtml(message)}</div>`;
+        }
+
+        function setCompareError(message) {
+            document.getElementById('compare-results').innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
+        }
+
+        function escapeHtml(value) {
+            const str = String(value ?? '');
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = str;
             return div.innerHTML;
         }
     </script>

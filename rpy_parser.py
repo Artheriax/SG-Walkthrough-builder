@@ -8,8 +8,7 @@ import os
 import json
 import hashlib
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Optional, Tuple
-from pathlib import Path
+from typing import List, Dict, Optional, Tuple, Any, Union
 from datetime import datetime
 
 
@@ -26,10 +25,14 @@ class DialogueLine:
 @dataclass
 class Choice:
     """Represents a menu choice."""
-    options: List[Dict[str, any]]  # Each option has 'text', 'line_number', 'actions'
+    options: List[Dict[str, Any]]  # Each option has 'text', 'line_number', 'actions'
     label: str
     line_number: int
     conditions: List[str] = field(default_factory=list)
+    nesting_level: int = 0
+    parent_choice_line: Optional[int] = None
+    parent_option_index: Optional[int] = None
+    parent_option_text: str = ''
 
 
 @dataclass
@@ -48,6 +51,7 @@ class Jump:
     line_number: int
     source_label: str
     file_path: str
+    conditions: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -67,6 +71,9 @@ class SceneData:
     choices: List[Choice]
     jumps: List[Jump]
     conditions: List[Condition]
+    state_actions: List[Dict[str, Any]] = field(default_factory=list)
+    file_path: str = ''
+    label_line_number: Optional[int] = None
 
 
 @dataclass
@@ -103,7 +110,14 @@ class RPyParser:
     ASSIGNMENT_PATTERN = re.compile(r'^\s*\$?\s*[a-zA-Z_][a-zA-Z0-9_]*\s*=.*$')
     
     # Pattern for choice options in menu blocks
-    CHOICE_OPTION_PATTERN = re.compile(r'^\s*"(?P<text>.+)"\s*:\s*$')
+    CHOICE_OPTION_PATTERN = re.compile(
+        r'^\s*"(?P<text>.+?)"\s*(?:if\s+(?P<if_condition>.+?))?\s*:\s*$'
+    )
+
+    # Pattern for variable assignments inside choice branches
+    CHOICE_ASSIGNMENT_PATTERN = re.compile(
+        r'^\s*\$?\s*(?P<target>[a-zA-Z_][a-zA-Z0-9_\.]*)\s*(?P<op>\+=|-=|\*=|/=|=)\s*(?P<expr>.+?)\s*$'
+    )
     
     def __init__(self):
         self.current_label = ""
@@ -164,15 +178,44 @@ class RPyParser:
         current_choices = []
         current_jumps = []
         current_conditions = []
+        current_state_actions = []
         
-        in_menu = False
-        menu_indent = 0
-        current_menu_options = []
-        menu_start_line = 0
-        menu_conditions = []
+        menu_stack: List[Dict[str, Any]] = []
         
-        indent_level = 0
-        condition_stack = []
+        condition_stack: List[Tuple[int, str]] = []
+        condition_branch_history: Dict[int, List[str]] = {}
+
+        def active_conditions() -> List[str]:
+            return [condition for _, condition in condition_stack]
+
+        def negate_branch_history(branch_conditions: List[str]) -> str:
+            normalized = [str(condition or '').strip() for condition in branch_conditions]
+            normalized = [condition for condition in normalized if condition]
+            if not normalized:
+                return ''
+
+            joined = ' or '.join(f"({condition})" for condition in normalized)
+            return f"not ({joined})"
+
+        def flush_menu_choice(menu_ctx: Optional[Dict[str, Any]]):
+            if not menu_ctx:
+                return
+
+            options = menu_ctx.get('options', [])
+            if not options:
+                return
+
+            choice_obj = Choice(
+                options=options,
+                label=self.current_label,
+                line_number=menu_ctx.get('start_line', 0),
+                conditions=menu_ctx.get('conditions', []),
+                nesting_level=menu_ctx.get('nesting_level', 0),
+                parent_choice_line=menu_ctx.get('parent_choice_line'),
+                parent_option_index=menu_ctx.get('parent_option_index'),
+                parent_option_text=menu_ctx.get('parent_option_text', '')
+            )
+            current_choices.append(choice_obj)
         
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
@@ -185,12 +228,22 @@ class RPyParser:
             # Check for label definitions
             label_match = self.LABEL_PATTERN.match(content)
             if label_match:
+                while menu_stack:
+                    flush_menu_choice(menu_stack.pop())
+
                 # Save previous scene if exists
-                if current_scene_data and current_dialogues:
+                if current_scene_data and (current_dialogues or current_choices or current_jumps or current_state_actions):
                     current_scene_data.dialogues = current_dialogues
-                    current_scene_data.choices = current_choices
+                    current_scene_data.choices = sorted(
+                        current_choices,
+                        key=lambda choice: (
+                            choice.line_number if isinstance(choice.line_number, int) else 10**9,
+                            choice.nesting_level
+                        )
+                    )
                     current_scene_data.jumps = current_jumps
                     current_scene_data.conditions = current_conditions
+                    current_scene_data.state_actions = current_state_actions
                     scenes.append(current_scene_data)
                 
                 label_name = label_match.group('name')
@@ -210,16 +263,35 @@ class RPyParser:
                 current_choices = []
                 current_jumps = []
                 current_conditions = []
+                current_state_actions = []
                 current_scene_data = SceneData(
                     label_name=label_name,
                     dialogues=[],
                     choices=[],
                     jumps=[],
-                    conditions=[]
+                    conditions=[],
+                    state_actions=[],
+                    file_path=file_path,
+                    label_line_number=line_num
                 )
-                in_menu = False
+                menu_stack = []
                 condition_stack = []
                 continue
+
+            # Keep condition context in sync with block indentation.
+            if content and not content.startswith('#'):
+                while condition_stack and current_indent <= condition_stack[-1][0]:
+                    condition_stack.pop()
+
+                for indent_level in list(condition_branch_history.keys()):
+                    if indent_level > current_indent:
+                        condition_branch_history.pop(indent_level, None)
+
+                if current_indent in condition_branch_history and not self.IF_PATTERN.match(content):
+                    condition_branch_history.pop(current_indent, None)
+
+                while menu_stack and current_indent <= menu_stack[-1]['indent']:
+                    flush_menu_choice(menu_stack.pop())
             
             # Update current label context for jumps
             if current_scene_data is None and self.current_label:
@@ -229,11 +301,38 @@ class RPyParser:
             # Check for jumps
             jump_match = self.JUMP_PATTERN.match(content)
             if jump_match:
+                jump_conditions = active_conditions()
+
+                # If this jump is inside a menu option branch, bind it to that
+                # specific choice option so downstream activation can respect the
+                # user's selected option instead of treating all option jumps as unconditional.
+                if menu_stack:
+                    active_menu = menu_stack[-1]
+                    current_option = active_menu.get('current_option')
+                    current_option_indent = active_menu.get('current_option_indent', 0)
+                    if current_option and current_indent > current_option_indent:
+                        option_index = current_option.get('option_index')
+                        menu_start_line = active_menu.get('start_line')
+                        if isinstance(menu_start_line, int) and isinstance(option_index, int):
+                            jump_conditions = [
+                                *jump_conditions,
+                                f"__choice_{menu_start_line} == {option_index}"
+                            ]
+
+                        current_option_actions = current_option.get('actions', [])
+                        current_option_actions.append({
+                            'type': 'jump',
+                            'target': jump_match.group('target').strip(),
+                            'line_number': line_num
+                        })
+                        current_option['actions'] = current_option_actions
+
                 jump_obj = Jump(
                     target=jump_match.group('target'),
                     line_number=line_num,
                     source_label=self.current_label,
-                    file_path=file_path
+                    file_path=file_path,
+                    conditions=jump_conditions
                 )
                 current_jumps.append(jump_obj)
                 jumps.append(jump_obj)
@@ -241,60 +340,140 @@ class RPyParser:
             
             # Check for menu start
             if self.MENU_PATTERN.match(content):
-                in_menu = True
-                menu_indent = current_indent
-                current_menu_options = []
-                menu_start_line = line_num
-                menu_conditions = condition_stack.copy()
+                parent_choice_line = None
+                parent_option_index = None
+                parent_option_text = ''
+                nesting_level = len(menu_stack)
+
+                if menu_stack:
+                    parent_ctx = menu_stack[-1]
+                    parent_option = parent_ctx.get('current_option')
+                    parent_option_indent = parent_ctx.get('current_option_indent', -1)
+                    if parent_option and current_indent > parent_option_indent:
+                        parent_choice_line = parent_ctx.get('start_line')
+                        parent_option_index = parent_option.get('option_index')
+                        parent_option_text = parent_option.get('text', '')
+
+                menu_stack.append({
+                    'indent': current_indent,
+                    'start_line': line_num,
+                    'conditions': active_conditions(),
+                    'options': [],
+                    'current_option': None,
+                    'current_option_indent': 0,
+                    'nesting_level': nesting_level,
+                    'parent_choice_line': parent_choice_line,
+                    'parent_option_index': parent_option_index,
+                    'parent_option_text': parent_option_text
+                })
                 continue
             
             # Check for if/elif/else conditions
             if_match = self.IF_PATTERN.match(content)
             if if_match:
                 cond_type = if_match.group('type')
-                condition = if_match.group('condition') or ''
-                
-                if cond_type == 'else':
-                    condition = 'else'
+                raw_condition = (if_match.group('condition') or '').strip()
+
+                if cond_type == 'if':
+                    effective_condition = raw_condition
+                    condition_branch_history[current_indent] = [raw_condition] if raw_condition else []
+                    display_condition = raw_condition
+                elif cond_type == 'elif':
+                    previous_conditions = condition_branch_history.get(current_indent, [])
+                    guard_condition = negate_branch_history(previous_conditions)
+
+                    if guard_condition and raw_condition:
+                        effective_condition = f"({guard_condition}) and ({raw_condition})"
+                    else:
+                        effective_condition = raw_condition or guard_condition
+
+                    updated_conditions = [*previous_conditions]
+                    if raw_condition:
+                        updated_conditions.append(raw_condition)
+                    condition_branch_history[current_indent] = updated_conditions
+                    display_condition = raw_condition
+                else:
+                    previous_conditions = condition_branch_history.get(current_indent, [])
+                    guard_condition = negate_branch_history(previous_conditions)
+                    effective_condition = guard_condition or 'else'
+                    display_condition = 'else'
                 
                 cond_obj = Condition(
-                    condition=condition.strip(),
+                    condition=display_condition,
                     line_number=line_num,
                     label=self.current_label,
                     block_type=cond_type
                 )
                 current_conditions.append(cond_obj)
-                
-                if cond_type == 'else':
-                    condition_stack = condition_stack[:-1] if condition_stack else []
-                else:
-                    condition_stack.append(condition.strip())
+
+                condition_stack.append((current_indent, str(effective_condition).strip() or 'else'))
                 continue
             
             # Handle menu options
-            if in_menu:
-                if current_indent > menu_indent:
+            if menu_stack:
+                active_menu = menu_stack[-1]
+                if current_indent > active_menu['indent']:
                     choice_match = self.CHOICE_OPTION_PATTERN.match(content)
                     if choice_match:
                         option_text = choice_match.group('text')
-                        current_menu_options.append({
+                        inline_condition = (choice_match.group('if_condition') or '').strip()
+                        option_conditions = active_conditions()
+                        if inline_condition:
+                            option_conditions = [*option_conditions, inline_condition]
+
+                        option_index = len(active_menu['options'])
+                        option_data = {
                             'text': option_text,
                             'line_number': line_num,
-                            'conditions': condition_stack.copy()
-                        })
+                            'conditions': option_conditions,
+                            'actions': [],
+                            'option_index': option_index
+                        }
+                        active_menu['options'].append(option_data)
+                        active_menu['current_option'] = option_data
+                        active_menu['current_option_indent'] = current_indent
+                        continue
+
+                    current_option = active_menu.get('current_option')
+                    current_option_indent = active_menu.get('current_option_indent', 0)
+                    if current_option and current_indent > current_option_indent:
+                        assignment_match = self.CHOICE_ASSIGNMENT_PATTERN.match(content)
+                        if assignment_match:
+                            current_option_actions = current_option.get('actions', [])
+                            current_option_actions.append({
+                                'type': 'assign',
+                                'target': assignment_match.group('target').strip(),
+                                'op': assignment_match.group('op').strip(),
+                                'expression': assignment_match.group('expr').strip(),
+                                'line_number': line_num
+                            })
+                            current_option['actions'] = current_option_actions
+                            continue
+
+                        option_jump_match = self.JUMP_PATTERN.match(content)
+                        if option_jump_match:
+                            current_option_actions = current_option.get('actions', [])
+                            current_option_actions.append({
+                                'type': 'jump',
+                                'target': option_jump_match.group('target').strip(),
+                                'line_number': line_num
+                            })
+                            current_option['actions'] = current_option_actions
                     continue
-                else:
-                    # End of menu block
-                    if current_menu_options:
-                        choice_obj = Choice(
-                            options=current_menu_options,
-                            label=self.current_label,
-                            line_number=menu_start_line,
-                            conditions=menu_conditions
-                        )
-                        current_choices.append(choice_obj)
-                    in_menu = False
-                    current_menu_options = []
+
+            # Track non-choice state assignments so scene activation conditions can
+            # evaluate variables that are set in regular script flow.
+            assignment_match = self.CHOICE_ASSIGNMENT_PATTERN.match(content)
+            if assignment_match and current_scene_data is not None:
+                current_state_actions.append({
+                    'type': 'assign',
+                    'target': assignment_match.group('target').strip(),
+                    'op': assignment_match.group('op').strip(),
+                    'expression': assignment_match.group('expr').strip(),
+                    'line_number': line_num,
+                    'conditions': active_conditions()
+                })
+                continue
             
             # Check for dialogue
             if not self.is_game_dialogue(line, content):
@@ -315,7 +494,7 @@ class RPyParser:
                     text=text,
                     line_number=line_num,
                     label=self.current_label,
-                    conditions=condition_stack.copy()
+                    conditions=active_conditions()
                 )
                 current_dialogues.append(dialogue)
                 continue
@@ -329,18 +508,28 @@ class RPyParser:
                     text=text,
                     line_number=line_num,
                     label=self.current_label,
-                    conditions=condition_stack.copy()
+                    conditions=active_conditions()
                 )
                 current_dialogues.append(dialogue)
                 continue
         
+        while menu_stack:
+            flush_menu_choice(menu_stack.pop())
+
         # Save last scene
         if current_scene_data:
             current_scene_data.dialogues = current_dialogues
-            current_scene_data.choices = current_choices
+            current_scene_data.choices = sorted(
+                current_choices,
+                key=lambda choice: (
+                    choice.line_number if isinstance(choice.line_number, int) else 10**9,
+                    choice.nesting_level
+                )
+            )
             current_scene_data.jumps = current_jumps
             current_scene_data.conditions = current_conditions
-            if current_dialogues or current_choices or current_jumps:
+            current_scene_data.state_actions = current_state_actions
+            if current_dialogues or current_choices or current_jumps or current_state_actions:
                 scenes.append(current_scene_data)
         
         return scenes, labels, jumps
@@ -365,7 +554,6 @@ class RPyParser:
                         all_scenes[season] = {}
                     
                     for scene in scenes:
-                        key = f"{season}:{scene.label_name}"
                         all_scenes[season][scene.label_name] = scene
                     
                     for label in labels:
@@ -387,22 +575,42 @@ class CacheManager:
         os.makedirs(cache_dir, exist_ok=True)
         self.cache_file = os.path.join(cache_dir, 'game_data.json')
     
-    def is_cache_valid(self, parser: RPyParser, source_dir: str) -> bool:
+    def is_cache_valid(self, parser: RPyParser, source_dirs: Union[str, List[str]]) -> bool:
         """Check if cached data is still valid."""
         if not os.path.exists(self.cache_file):
             return False
+
+        if isinstance(source_dirs, str):
+            source_dirs = [source_dirs]
         
         try:
             with open(self.cache_file, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
             
+            # Build current hash map from the actual source directories.
+            current_hashes = {}
+            for source_dir in source_dirs:
+                if not os.path.exists(source_dir):
+                    continue
+
+                for root, dirs, files in os.walk(source_dir):
+                    for file in files:
+                        if file.endswith('.rpy'):
+                            file_path = os.path.join(root, file)
+                            current_hashes[file_path] = parser.get_file_hash(file_path)
+
+            if not current_hashes:
+                return False
+
             # Check file hashes
             cached_hashes = cached_data.get('file_hashes', {})
-            for file_path, stored_hash in cached_hashes.items():
-                if not os.path.exists(file_path):
-                    return False
-                current_hash = parser.get_file_hash(file_path)
-                if current_hash != stored_hash:
+
+            # If files were added/removed, cache is stale.
+            if set(cached_hashes.keys()) != set(current_hashes.keys()):
+                return False
+
+            for file_path, current_hash in current_hashes.items():
+                if cached_hashes.get(file_path) != current_hash:
                     return False
             
             return True
@@ -427,7 +635,7 @@ class CacheManager:
         with open(self.cache_file, 'w', encoding='utf-8') as f:
             json.dump(serializable, f, indent=2, ensure_ascii=False)
     
-    def load(self) -> Optional[GameData]:
+    def load(self) -> Optional[Dict[str, Any]]:
         """Load game data from cache."""
         if not os.path.exists(self.cache_file):
             return None
@@ -436,13 +644,12 @@ class CacheManager:
             with open(self.cache_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            # Convert back to dataclasses (simplified - just return dict for now)
             return data
         except Exception:
             return None
 
 
-def extract_game_data(source_dirs: List[str], use_cache: bool = True) -> GameData:
+def extract_game_data(source_dirs: List[str], use_cache: bool = True) -> Dict[str, Any]:
     """
     Main function to extract game data from .rpy files.
     
@@ -451,15 +658,17 @@ def extract_game_data(source_dirs: List[str], use_cache: bool = True) -> GameDat
         use_cache: Whether to use cached data if available
     
     Returns:
-        GameData object containing all extracted information
+        Dict containing all extracted information
     """
     parser = RPyParser()
     cache = CacheManager()
     
     # Check cache validity
-    if use_cache and cache.is_cache_valid(parser, source_dirs[0]):
-        print("Using cached data...")
-        return cache.load()
+    if use_cache and cache.is_cache_valid(parser, source_dirs):
+        cached_data = cache.load()
+        if cached_data is not None:
+            print("Using cached data...")
+            return cached_data
     
     print("Extracting game data from .rpy files...")
     
@@ -504,7 +713,7 @@ def extract_game_data(source_dirs: List[str], use_cache: bool = True) -> GameDat
     cache.save(game_data)
     print(f"Data cached to {cache.cache_file}")
     
-    return game_data
+    return asdict(game_data)
 
 
 if __name__ == '__main__':
@@ -519,11 +728,14 @@ if __name__ == '__main__':
     game_data = extract_game_data(source_dirs)
     
     print(f"\nExtraction complete!")
-    print(f"Seasons found: {list(game_data.seasons.keys())}")
-    print(f"Total labels: {len(game_data.labels)}")
+    print(f"Seasons found: {list(game_data['seasons'].keys())}")
+    print(f"Total labels: {len(game_data['labels'])}")
     
-    for season, scenes in game_data.seasons.items():
+    for season, scenes in game_data['seasons'].items():
         print(f"\n{season}: {len(scenes)} scenes")
         for label_name in list(scenes.keys())[:5]:
             scene = scenes[label_name]
-            print(f"  - {label_name}: {len(scene.dialogues)} dialogues, {len(scene.choices)} choices, {len(scene.jumps)} jumps")
+            print(
+                f"  - {label_name}: {len(scene.get('dialogues', []))} dialogues, "
+                f"{len(scene.get('choices', []))} choices, {len(scene.get('jumps', []))} jumps"
+            )
