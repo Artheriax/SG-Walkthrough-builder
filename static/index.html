@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summer's Gone - Walkthrough Builder</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 350px;
+            gap: 1rem;
+            height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .season-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .season-btn {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .season-btn:hover, .season-btn.active {
+            background: var(--accent);
+        }
+
+        .scene-list {
+            list-style: none;
+        }
+
+        .scene-item {
+            padding: 0.6rem;
+            margin: 0.25rem 0;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .scene-item:hover, .scene-item.active {
+            background: var(--accent);
+        }
+
+        .scene-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+
+        .header h1 {
+            color: var(--accent);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            width: 250px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+        }
+
+        /* Dialogue Display */
+        .dialogue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .dialogue-line {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .dialogue-speaker {
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .dialogue-text {
+            line-height: 1.6;
+        }
+
+        .dialogue-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Choices */
+        .choice-container {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 2px solid var(--warning);
+        }
+
+        .choice-title {
+            color: var(--warning);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .choice-option {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        /* Compare Panel */
+        .compare-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .compare-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .compare-section h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .diff-only-1 {
+            border-left-color: var(--danger);
+        }
+
+        .diff-only-2 {
+            border-left-color: var(--success);
+        }
+
+        .diff-common {
+            border-left-color: var(--warning);
+        }
+
+        .stats {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Jumps */
+        .jump-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: var(--danger);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .jump-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Conditions */
+        .condition-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: var(--warning);
+            color: #000;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2>📚 Scenes</h2>
+            
+            <div class="season-selector">
+                <button class="season-btn active" data-season="Season_1">Season 1</button>
+                <button class="season-btn" data-season="Season_2">Season 2</button>
+            </div>
+
+            <div id="sceneList" class="scene-list">
+                <div class="loading">Loading scenes...</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h1 id="sceneTitle">Select a Scene</h1>
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search dialogue...">
+                    <button class="btn" onclick="searchDialogue()">🔍</button>
+                    <button class="btn btn-secondary" onclick="refreshData()">🔄</button>
+                </div>
+            </div>
+
+            <div id="contentArea">
+                <div class="loading">Select a scene from the sidebar to view its content</div>
+            </div>
+        </main>
+
+        <!-- Compare Panel -->
+        <aside class="compare-panel">
+            <h2>⚖️ Compare</h2>
+            
+            <div class="compare-section">
+                <h3>Scene 1</h3>
+                <select id="compare1Season" class="search-input" style="width: 100%; margin-bottom: 0.5rem;">
+                    <option value="Season_1">Season 1</option>
+                    <option value="Season_2">Season 2</option>
+                </select>
+                <select id="compare1Label" class="search-input" style="width: 100%;">
+                    <option value="">Select scene...</option>
+                </select>
+            </div>
+
+            <div class="compare-section">
+                <h3>Scene 2</h3>
+                <select id="compare2Season" class="search-input" style="width: 100%; margin-bottom: 0.5rem;">
+                    <option value="Season_1">Season 1</option>
+                    <option value="Season_2">Season 2</option>
+                </select>
+                <select id="compare2Label" class="search-input" style="width: 100%;">
+                    <option value="">Select scene...</option>
+                </select>
+            </div>
+
+            <button class="btn" style="width: 100%;" onclick="compareScenes()">Compare</button>
+
+            <div id="compareResults" style="margin-top: 1.5rem;"></div>
+        </aside>
+    </div>
+
+    <script>
+        let currentSeason = 'Season_1';
+        let scenes = {};
+        let labels = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadScenes(currentSeason);
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Season buttons
+            document.querySelectorAll('.season-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSeason = btn.dataset.season;
+                    loadScenes(currentSeason);
+                });
+            });
+
+            // Search on Enter
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchDialogue();
+            });
+        }
+
+        async function loadScenes(season) {
+            const sceneList = document.getElementById('sceneList');
+            sceneList.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const response = await fetch(`/api/season/${season}`);
+                scenes = await response.json();
+                
+                sceneList.innerHTML = '';
+                
+                const sortedScenes = Object.keys(scenes).sort();
+                
+                sortedScenes.forEach(label => {
+                    const scene = scenes[label];
+                    const item = document.createElement('li');
+                    item.className = 'scene-item';
+                    item.innerHTML = `
+                        <div>${label}</div>
+                        <div class="scene-meta">
+                            💬 ${scene.dialogues?.length || 0} 
+                            🎯 ${scene.choices?.length || 0} 
+                            ➡️ ${scene.jumps?.length || 0}
+                        </div>
+                    `;
+                    item.addEventListener('click', () => loadScene(season, label));
+                    sceneList.appendChild(item);
+                });
+
+                // Update compare dropdowns
+                updateCompareDropdowns();
+
+            } catch (error) {
+                sceneList.innerHTML = `<div class="loading">Error loading scenes: ${error.message}</div>`;
+            }
+        }
+
+        async function loadScene(season, label) {
+            const contentArea = document.getElementById('contentArea');
+            const sceneTitle = document.getElementById('sceneTitle');
+            
+            // Highlight active scene
+            document.querySelectorAll('.scene-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.textContent.includes(label)) item.classList.add('active');
+            });
+
+            sceneTitle.textContent = `${season}: ${label}`;
+            contentArea.innerHTML = '<div class="loading">Loading scene...</div>';
+
+            try {
+                const response = await fetch(`/api/scene/${season}/${label}`);
+                const scene = await response.json();
+
+                let html = '';
+
+                // Stats
+                html += `
+                    <div class="stats">
+                        <div class="stat-row"><span>Dialogues:</span><span>${scene.dialogues?.length || 0}</span></div>
+                        <div class="stat-row"><span>Choices:</span><span>${scene.choices?.length || 0}</span></div>
+                        <div class="stat-row"><span>Jumps:</span><span>${scene.jumps?.length || 0}</span></div>
+                    </div>
+                `;
+
+                // Jumps
+                if (scene.jumps?.length > 0) {
+                    html += '<div class="compare-section"><h3>➡️ Jumps (Scene Transitions)</h3>';
+                    scene.jumps.forEach(jump => {
+                        html += `
+                            <div class="dialogue-line">
+                                <span class="jump-indicator">JUMP</span>
+                                <span class="jump-link" onclick="loadScene('${season}', '${jump.target}')">${jump.target}</span>
+                                <div class="dialogue-meta">Line ${jump.line_number}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+
+                // Dialogues
+                if (scene.dialogues?.length > 0) {
+                    html += '<div class="compare-section"><h3>💬 Dialogue</h3><div class="dialogue-container">';
+                    
+                    scene.dialogues.forEach(dlg => {
+                        const conditions = dlg.conditions?.length > 0 
+                            ? `<span class="condition-badge">${dlg.conditions.join(' → ')}</span>` 
+                            : '';
+                        
+                        html += `
+                            <div class="dialogue-line">
+                                <div class="dialogue-speaker">${dlg.speaker}${conditions}</div>
+                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
+                                <div class="dialogue-meta">Line ${dlg.line_number}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div></div>';
+                }
+
+                // Choices
+                if (scene.choices?.length > 0) {
+                    html += '<div class="compare-section"><h3>🎯 Choices</h3>';
+                    
+                    scene.choices.forEach(choice => {
+                        html += `
+                            <div class="choice-container">
+                                <div class="choice-title">Menu (Line ${choice.line_number})</div>
+                        `;
+                        
+                        choice.options?.forEach(opt => {
+                            const optConditions = opt.conditions?.length > 0 
+                                ? `<span class="condition-badge">${opt.conditions.join(' → ')}</span>` 
+                                : '';
+                            html += `
+                                <div class="choice-option">
+                                    ${escapeHtml(opt.text)}${optConditions}
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                    });
+                    
+                    html += '</div>';
+                }
+
+                contentArea.innerHTML = html || '<div class="loading">No content found</div>';
+
+            } catch (error) {
+                contentArea.innerHTML = `<div class="loading">Error loading scene: ${error.message}</div>`;
+            }
+        }
+
+        function updateCompareDropdowns() {
+            const sortedLabels = Object.keys(scenes).sort();
+            
+            ['compare1Label', 'compare2Label'].forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">Select scene...</option>';
+                
+                sortedLabels.forEach(label => {
+                    const option = document.createElement('option');
+                    option.value = label;
+                    option.textContent = label;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        async function compareScenes() {
+            const season1 = document.getElementById('compare1Season').value;
+            const label1 = document.getElementById('compare1Label').value;
+            const season2 = document.getElementById('compare2Season').value;
+            const label2 = document.getElementById('compare2Label').value;
+
+            if (!label1 || !label2) {
+                alert('Please select both scenes to compare');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('compareResults');
+            resultsDiv.innerHTML = '<div class="loading">Comparing...</div>';
+
+            try {
+                const response = await fetch('/api/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ season1, label1, season2, label2 })
+                });
+
+                const result = await response.json();
+
+                let html = `
+                    <div class="stats">
+                        <div class="stat-row"><span>Scene 1 dialogues:</span><span>${result.scene1_info.total_dialogues}</span></div>
+                        <div class="stat-row"><span>Scene 2 dialogues:</span><span>${result.scene2_info.total_dialogues}</span></div>
+                        <div class="stat-row"><span>Common:</span><span>${result.common.length}</span></div>
+                        <div class="stat-row"><span>Only in Scene 1:</span><span>${result.only_in_first.length}</span></div>
+                        <div class="stat-row"><span>Only in Scene 2:</span><span>${result.only_in_second.length}</span></div>
+                    </div>
+                `;
+
+                if (result.only_in_first.length > 0) {
+                    html += '<div class="compare-section"><h3 style="color: var(--danger)">Only in Scene 1</h3>';
+                    result.only_in_first.slice(0, 20).forEach(dlg => {
+                        html += `
+                            <div class="dialogue-line diff-only-1">
+                                <div class="dialogue-speaker">${dlg.speaker}</div>
+                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
+                            </div>
+                        `;
+                    });
+                    if (result.only_in_first.length > 20) {
+                        html += `<div class="loading">... and ${result.only_in_first.length - 20} more</div>`;
+                    }
+                    html += '</div>';
+                }
+
+                if (result.only_in_second.length > 0) {
+                    html += '<div class="compare-section"><h3 style="color: var(--success)">Only in Scene 2</h3>';
+                    result.only_in_second.slice(0, 20).forEach(dlg => {
+                        html += `
+                            <div class="dialogue-line diff-only-2">
+                                <div class="dialogue-speaker">${dlg.speaker}</div>
+                                <div class="dialogue-text">${escapeHtml(dlg.text)}</div>
+                            </div>
+                        `;
+                    });
+                    if (result.only_in_second.length > 20) {
+                        html += `<div class="loading">... and ${result.only_in_second.length - 20} more</div>`;
+                    }
+                    html += '</div>';
+                }
+
+                resultsDiv.innerHTML = html || '<div class="loading">No differences found</div>';
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function searchDialogue() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            const contentArea = document.getElementById('contentArea');
+            const sceneTitle = document.getElementById('sceneTitle');
+            
+            sceneTitle.textContent = `Search: "${query}"`;
+            contentArea.innerHTML = '<div class="loading">Searching...</div>';
+
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const results = await response.json();
+
+                if (results.length === 0) {
+                    contentArea.innerHTML = '<div class="loading">No results found</div>';
+                    return;
+                }
+
+                let html = `<div class="stats"><div class="stat-row"><span>Found:</span><span>${results.length} results</span></div></div>`;
+                html += '<div class="dialogue-container">';
+
+                results.forEach(result => {
+                    html += `
+                        <div class="dialogue-line">
+                            <div class="dialogue-speaker">${result.speaker}</div>
+                            <div class="dialogue-text">${escapeHtml(result.text)}</div>
+                            <div class="dialogue-meta">
+                                ${result.season}: ${result.label} • Line ${result.line_number}
+                                <span class="jump-link" style="margin-left: 1rem;" onclick="loadScene('${result.season}', '${result.label}')">→ View Scene</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                contentArea.innerHTML = html;
+
+            } catch (error) {
+                contentArea.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function refreshData() {
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = '<div class="loading">Refreshing data...</div>';
+
+            try {
+                const response = await fetch('/api/refresh', { method: 'POST' });
+                const result = await response.json();
+                
+                alert(`Data refreshed! Loaded ${result.labels} labels.`);
+                loadScenes(currentSeason);
+                contentArea.innerHTML = '<div class="loading">Select a scene from the sidebar</div>';
+            } catch (error) {
+                contentArea.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
