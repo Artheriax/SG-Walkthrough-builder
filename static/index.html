@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Summer's Gone - Playthrough Lab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-0: #061217;
@@ -117,7 +120,7 @@
         .select {
             appearance: none;
             background-image: linear-gradient(45deg, transparent 50%, var(--text-soft) 50%),
-                              linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
+                linear-gradient(135deg, var(--text-soft) 50%, transparent 50%);
             background-position: calc(100% - 15px) calc(1em + 1px), calc(100% - 10px) calc(1em + 1px);
             background-size: 5px 5px, 5px 5px;
             background-repeat: no-repeat;
@@ -967,6 +970,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="shell">
         <header class="topbar card">
@@ -989,32 +993,38 @@
                 <div class="builder-grid">
                     <article class="builder" id="left-builder">
                         <div class="builder-title">
-                            <input id="left-name" class="input" type="text" maxlength="50" placeholder="Left playthrough name">
+                            <input id="left-name" class="input" type="text" maxlength="50"
+                                placeholder="Left playthrough name">
                         </div>
-                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an option.</p>
+                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an
+                            option.</p>
                         <ul id="left-sequence" class="sequence"></ul>
                         <div id="left-summary" class="summary"></div>
                     </article>
 
                     <article class="builder" id="right-builder">
                         <div class="builder-title">
-                            <input id="right-name" class="input" type="text" maxlength="50" placeholder="Right playthrough name">
+                            <input id="right-name" class="input" type="text" maxlength="50"
+                                placeholder="Right playthrough name">
                         </div>
-                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an option.</p>
+                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an
+                            option.</p>
                         <ul id="right-sequence" class="sequence"></ul>
                         <div id="right-summary" class="summary"></div>
                     </article>
                 </div>
 
                 <div class="compare-actions">
-                    <button id="compare-playthroughs-btn" class="btn btn-hot" type="button">Compare Playthroughs</button>
+                    <button id="compare-playthroughs-btn" class="btn btn-hot" type="button">Compare
+                        Playthroughs</button>
                     <button id="copy-left-to-right-btn" class="btn btn-subtle" type="button">Copy Left to Right</button>
                     <button id="copy-right-to-left-btn" class="btn btn-subtle" type="button">Copy Right to Left</button>
                     <button id="clear-playthroughs-btn" class="btn btn-subtle" type="button">Reload Full Story</button>
                 </div>
 
                 <div id="compare-results" class="compare-results">
-                    <div class="notice">The full story is loaded on both sides. Choices are undefined until selected.</div>
+                    <div class="notice">The full story is loaded on both sides. Choices are undefined until selected.
+                    </div>
                 </div>
             </section>
         </main>
@@ -1984,4 +1994,5 @@
         }
     </script>
 </body>
+
 </html>
