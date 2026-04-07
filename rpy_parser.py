@@ -6,10 +6,14 @@ Designed for the "Summer's Gone" visual novel series.
 import re
 import os
 import json
+import ast
 import hashlib
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple, Any, Union
 from datetime import datetime
+
+
+PARSER_VERSION = '2026-04-full-character-name-resolution-v1'
 
 
 @dataclass
@@ -83,6 +87,7 @@ class GameData:
     labels: Dict[str, Label]  # label_name -> Label
     file_hashes: Dict[str, str]  # file_path -> hash for cache invalidation
     extraction_date: str
+    parser_version: str
 
 
 class RPyParser:
@@ -95,7 +100,9 @@ class RPyParser:
     NARRATOR_PATTERN = re.compile(r'^\s*"(?P<text>.+)"\s*$')
     
     # Pattern for labels: label label_name:
-    LABEL_PATTERN = re.compile(r'^label\s+(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*$')
+    LABEL_PATTERN = re.compile(
+        r'^label\s+(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(?:#.*)?$'
+    )
     
     # Pattern for jumps: jump target_label
     JUMP_PATTERN = re.compile(r'^\s*jump\s+(?P<target>[a-zA-Z_][a-zA-Z0-9_]*)\s*$')
@@ -114,6 +121,12 @@ class RPyParser:
         r'^\s*"(?P<text>.+?)"\s*(?:if\s+(?P<if_condition>.+?))?\s*:\s*$'
     )
 
+    # Pattern for character aliases: define x = Character('Display Name', ...)
+    DEFINE_CHARACTER_PATTERN = re.compile(
+        r'^\s*define\s+(?P<alias>[a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*Character\(\s*(?P<name>"[^"]*"|\'[^\']*\')',
+        re.IGNORECASE
+    )
+
     # Pattern for variable assignments inside choice branches
     CHOICE_ASSIGNMENT_PATTERN = re.compile(
         r'^\s*\$?\s*(?P<target>[a-zA-Z_][a-zA-Z0-9_\.]*)\s*(?P<op>\+=|-=|\*=|/=|=)\s*(?P<expr>.+?)\s*$'
@@ -122,6 +135,46 @@ class RPyParser:
     def __init__(self):
         self.current_label = ""
         self.indent_stack = []
+
+    def parse_character_definition(self, content: str) -> Optional[Tuple[str, str]]:
+        """Extract one alias->display-name pair from a define Character line."""
+        match = self.DEFINE_CHARACTER_PATTERN.match(content or '')
+        if not match:
+            return None
+
+        alias = str(match.group('alias') or '').strip()
+        name_token = str(match.group('name') or '').strip()
+        if not alias or not name_token:
+            return None
+
+        try:
+            display_name = ast.literal_eval(name_token)
+        except Exception:
+            display_name = name_token[1:-1]
+
+        display_name = str(display_name or '').strip()
+        if not display_name:
+            return None
+
+        return alias, display_name
+
+    def collect_character_aliases(self, file_paths: List[str]) -> Dict[str, str]:
+        """Collect global character aliases so files without local defines still resolve names."""
+        aliases: Dict[str, str] = {}
+
+        for file_path in sorted(file_paths):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as handle:
+                    for raw_line in handle:
+                        content = raw_line.rstrip('\n\r').lstrip()
+                        parsed = self.parse_character_definition(content)
+                        if parsed:
+                            alias, display_name = parsed
+                            aliases[alias] = display_name
+            except Exception:
+                continue
+
+        return aliases
         
     def get_file_hash(self, file_path: str) -> str:
         """Calculate MD5 hash of a file for cache invalidation."""
@@ -165,11 +218,16 @@ class RPyParser:
             
         return True
     
-    def parse_file(self, file_path: str) -> Tuple[List[SceneData], List[Label], List[Jump]]:
+    def parse_file(
+        self,
+        file_path: str,
+        base_character_aliases: Optional[Dict[str, str]] = None
+    ) -> Tuple[List[SceneData], List[Label], List[Jump]]:
         """Parse a single .rpy file and extract game data."""
         scenes = []
         labels = []
         jumps = []
+        character_aliases = dict(base_character_aliases or {})
         
         season = self.detect_season(file_path)
         
@@ -297,6 +355,13 @@ class RPyParser:
             if current_scene_data is None and self.current_label:
                 # We're in a label but haven't created SceneData yet
                 pass
+
+            # Capture alias->name definitions so dialogue speakers can use full names.
+            character_definition = self.parse_character_definition(content)
+            if character_definition:
+                alias, display_name = character_definition
+                character_aliases[alias] = display_name
+                continue
             
             # Check for jumps
             jump_match = self.JUMP_PATTERN.match(content)
@@ -490,7 +555,7 @@ class RPyParser:
                     continue
                     
                 dialogue = DialogueLine(
-                    speaker=speaker,
+                    speaker=character_aliases.get(speaker, speaker),
                     text=text,
                     line_number=line_num,
                     label=self.current_label,
@@ -539,31 +604,39 @@ class RPyParser:
         all_scenes = {}
         all_labels = {}
         file_hashes = {}
-        
+
+        file_paths = []
         for root, dirs, files in os.walk(directory):
             for file in files:
                 if file.endswith('.rpy'):
-                    file_path = os.path.join(root, file)
-                    file_hash = self.get_file_hash(file_path)
-                    file_hashes[file_path] = file_hash
-                    
-                    scenes, labels, jumps = self.parse_file(file_path)
-                    
-                    season = self.detect_season(file_path)
-                    if season not in all_scenes:
-                        all_scenes[season] = {}
-                    
-                    for scene in scenes:
-                        all_scenes[season][scene.label_name] = scene
-                    
-                    for label in labels:
-                        all_labels[label.name] = label
+                    file_paths.append(os.path.join(root, file))
+
+        file_paths.sort()
+
+        for file_path in file_paths:
+            file_hashes[file_path] = self.get_file_hash(file_path)
+
+        base_character_aliases = self.collect_character_aliases(file_paths)
+        
+        for file_path in file_paths:
+            scenes, labels, jumps = self.parse_file(file_path, base_character_aliases=base_character_aliases)
+
+            season = self.detect_season(file_path)
+            if season not in all_scenes:
+                all_scenes[season] = {}
+
+            for scene in scenes:
+                all_scenes[season][scene.label_name] = scene
+
+            for label in labels:
+                all_labels[label.name] = label
         
         return GameData(
             seasons=all_scenes,
             labels=all_labels,
             file_hashes=file_hashes,
-            extraction_date=datetime.now().isoformat()
+            extraction_date=datetime.now().isoformat(),
+            parser_version=PARSER_VERSION
         )
 
 
@@ -675,38 +748,46 @@ def extract_game_data(source_dirs: List[str], use_cache: bool = True) -> Dict[st
     all_scenes = {}
     all_labels = {}
     file_hashes = {}
-    
+
+    all_file_paths = []
     for source_dir in source_dirs:
         if not os.path.exists(source_dir):
             print(f"Warning: Directory {source_dir} does not exist")
             continue
-            
+
         for root, dirs, files in os.walk(source_dir):
             for file in files:
                 if file.endswith('.rpy'):
-                    file_path = os.path.join(root, file)
-                    print(f"  Parsing: {file_path}")
-                    
-                    file_hash = parser.get_file_hash(file_path)
-                    file_hashes[file_path] = file_hash
-                    
-                    scenes, labels, jumps = parser.parse_file(file_path)
-                    
-                    season = parser.detect_season(file_path)
-                    if season not in all_scenes:
-                        all_scenes[season] = {}
-                    
-                    for scene in scenes:
-                        all_scenes[season][scene.label_name] = scene
-                    
-                    for label in labels:
-                        all_labels[label.name] = label
+                    all_file_paths.append(os.path.join(root, file))
+
+    all_file_paths.sort()
+
+    for file_path in all_file_paths:
+        file_hashes[file_path] = parser.get_file_hash(file_path)
+
+    base_character_aliases = parser.collect_character_aliases(all_file_paths)
+    
+    for file_path in all_file_paths:
+        print(f"  Parsing: {file_path}")
+
+        scenes, labels, jumps = parser.parse_file(file_path, base_character_aliases=base_character_aliases)
+
+        season = parser.detect_season(file_path)
+        if season not in all_scenes:
+            all_scenes[season] = {}
+
+        for scene in scenes:
+            all_scenes[season][scene.label_name] = scene
+
+        for label in labels:
+            all_labels[label.name] = label
     
     game_data = GameData(
         seasons=all_scenes,
         labels=all_labels,
         file_hashes=file_hashes,
-        extraction_date=datetime.now().isoformat()
+        extraction_date=datetime.now().isoformat(),
+        parser_version=PARSER_VERSION
     )
     
     # Save to cache

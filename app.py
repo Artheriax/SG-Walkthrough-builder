@@ -6,12 +6,13 @@ Provides a Flask API and serves a modern React-like frontend for comparing playt
 import os
 import re
 import ast
+import webbrowser
 from difflib import SequenceMatcher
 from collections import Counter
-from threading import Lock
+from threading import Lock, Timer
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
-from rpy_parser import extract_game_data, CacheManager, RPyParser
+from rpy_parser import extract_game_data, CacheManager, RPyParser, PARSER_VERSION
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
@@ -25,6 +26,27 @@ SOURCE_DIRS = ['Season_1', 'Season_2']
 MAX_COMPARISON_ITEMS = 250
 MAX_DIFF_LINES = 2500
 DIFF_CONTEXT_LINES = 3
+
+
+def should_auto_open_browser(debug_enabled):
+    """Return True when the startup process should open the browser tab."""
+    auto_open_env = str(os.environ.get('SG_AUTO_OPEN_BROWSER', '1')).strip().lower()
+    if auto_open_env in {'0', 'false', 'no', 'off'}:
+        return False
+
+    if not debug_enabled:
+        return True
+
+    # Flask debug mode starts a reloader parent + child process. Only open in child.
+    return os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+
+
+def auto_open_browser(url):
+    """Open the app URL in the default browser and ignore any platform-specific errors."""
+    try:
+        webbrowser.open_new(url)
+    except Exception as exc:
+        print(f"Could not auto-open browser: {exc}")
 
 
 def data_supports_scene_state_actions(data):
@@ -78,6 +100,11 @@ def data_supports_menu_branch_jump_conditions(data):
     return False
 
 
+def data_has_expected_parser_version(data):
+    """Ensure cache was produced by the current parser implementation."""
+    return str(data.get('parser_version') or '').strip() == PARSER_VERSION
+
+
 def get_game_data():
     """Load or extract game data."""
     global game_data
@@ -89,6 +116,7 @@ def get_game_data():
                     cached_data = cache_manager.load()
                     if (
                         cached_data is not None and
+                        data_has_expected_parser_version(cached_data) and
                         data_supports_scene_state_actions(cached_data) and
                         data_supports_menu_branch_jump_conditions(cached_data)
                     ):
@@ -129,6 +157,98 @@ def normalize_choice_selections(playthrough_data):
     return normalized
 
 
+CHOICE_MARKER_PATTERN = re.compile(r'__choice_(?P<line>\d+)\s*==\s*(?P<index>-?\d+)')
+
+
+def dedupe_text_list(values):
+    """Return ordered unique non-empty strings."""
+    unique = []
+    seen = set()
+
+    for value in values or []:
+        text = str(value or '').strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        unique.append(text)
+
+    return unique
+
+
+def build_choice_line_lookup(choices):
+    """Map choice line numbers to human-readable metadata for attribution."""
+    lookup = {}
+    if not isinstance(choices, list):
+        return lookup
+
+    for choice_index, choice in enumerate(choices):
+        if not isinstance(choice, dict):
+            continue
+
+        line_number = choice.get('line_number')
+        if not isinstance(line_number, int):
+            continue
+
+        option_text_by_index = {}
+        options = choice.get('options', [])
+        if isinstance(options, list):
+            for option_index, option in enumerate(options):
+                if not isinstance(option, dict):
+                    continue
+                option_text_by_index[option_index] = str(option.get('text') or '').strip()
+
+        lookup[line_number] = {
+            'choice_index': choice_index,
+            'line_number': line_number,
+            'option_text_by_index': option_text_by_index
+        }
+
+    return lookup
+
+
+def format_choice_reference(choice_line, option_index, choice_lookup):
+    """Describe one menu-option reference in a user-readable way."""
+    label = f"option {option_index + 1}"
+    if option_index < 0:
+        label = f"option {option_index}"
+
+    choice_meta = choice_lookup.get(choice_line, {}) if isinstance(choice_lookup, dict) else {}
+    if choice_meta:
+        choice_number = int(choice_meta.get('choice_index', 0)) + 1
+        option_text = str(choice_meta.get('option_text_by_index', {}).get(option_index) or '').strip()
+        if option_text:
+            return f"choice {choice_number} -> {label}: {option_text}"
+        return f"choice {choice_number} -> {label}"
+
+    return f"choice line {choice_line} -> {label}"
+
+
+def describe_condition_for_diff(condition_text, choice_lookup):
+    """Convert raw condition strings to readable attribution text."""
+    condition = str(condition_text or '').strip()
+    if not condition:
+        return ''
+
+    marker_match = CHOICE_MARKER_PATTERN.fullmatch(condition)
+    if marker_match:
+        choice_line = int(marker_match.group('line'))
+        option_index = int(marker_match.group('index'))
+        return format_choice_reference(choice_line, option_index, choice_lookup)
+
+    return condition
+
+
+def build_selected_choice_driver_text(choice_index, choice_line_number, selected_index, selected_text):
+    """Build a concise source string for a selected choice."""
+    choice_number = int(choice_index) + 1
+    option_number = int(selected_index) + 1
+    choice_line_meta = f" line {choice_line_number}" if isinstance(choice_line_number, int) else ''
+    option_text = str(selected_text or '').strip()
+    if option_text:
+        return f"choice {choice_number}{choice_line_meta} -> option {option_number}: {option_text}"
+    return f"choice {choice_number}{choice_line_meta} -> option {option_number}"
+
+
 class SafeExpressionEvaluator(ast.NodeVisitor):
     """Evaluate a restricted subset of Python expressions for story conditions."""
 
@@ -141,6 +261,15 @@ class SafeExpressionEvaluator(ast.NodeVisitor):
     def visit_Name(self, node):
         if node.id in self.variables:
             return self.variables[node.id]
+
+        # BellaKiss3x5 is derived from the legacy BellaKiss03x path flag.
+        if node.id == 'BellaKiss3x5' and 'BellaKiss03x' in self.variables:
+            return bool(self.variables.get('BellaKiss03x'))
+
+        # Season 2 introduces BellaDate from the legacy BellaNonExclusive5x0 route flag.
+        # If BellaDate has not been initialized in the simulated path yet, derive it.
+        if node.id == 'BellaDate' and 'BellaNonExclusive5x0' in self.variables:
+            return bool(self.variables.get('BellaNonExclusive5x0'))
 
         # Internal menu-choice markers use numeric option indices.
         # Missing values should not behave like 0 via bool/int coercion.
@@ -333,6 +462,17 @@ def apply_choice_action(action, variable_state):
         return None
 
     variable_state[target] = new_value
+
+    # BellaDate is a Season 2 route mirror derived from BellaNonExclusive5x0.
+    # Keep it synchronized whenever the source flag changes during simulation.
+    if target == 'BellaNonExclusive5x0':
+        variable_state['BellaDate'] = bool(new_value)
+
+    # BellaKiss3x5 is derived from BellaKiss03x in Chapter4alt.
+    # Keep it synchronized whenever the source flag changes during simulation.
+    if target == 'BellaKiss03x':
+        variable_state['BellaKiss3x5'] = bool(new_value)
+
     return {
         'target': target,
         'op': op,
@@ -363,9 +503,12 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
     choice_states = {}
     scene_states = {}
     scene_active_by_node = {}
-    scene_activation_overrides = set()
+    scene_has_true_jump_by_node = {}
+    scene_true_jump_target_by_node = {}
+    scene_activation_overrides = {}
 
     scene_position_by_node = {}
+    scene_node_by_input_index = {}
     selected_nodes = set()
     for scene_index, scene_ref in enumerate(scenes_input, start=1):
         if not isinstance(scene_ref, dict):
@@ -382,6 +525,7 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
 
         scene_node = (season, label)
         selected_nodes.add(scene_node)
+        scene_node_by_input_index[scene_index] = scene_node
         if scene_node not in scene_position_by_node:
             scene_position_by_node[scene_node] = scene_index
 
@@ -440,16 +584,52 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
             if scene_position_by_node.get(incoming['source'], 10**9) < scene_index
         ]
 
+        matched_incoming_jump = None
+
         if incoming_from_past:
-            scene_active = any(
-                scene_active_by_node.get(incoming['source'], False) and
-                evaluate_condition_list(incoming.get('conditions', []), variable_state)
-                for incoming in incoming_from_past
-            )
+            for incoming in incoming_from_past:
+                if not scene_active_by_node.get(incoming['source'], False):
+                    continue
+
+                if not evaluate_condition_list(incoming.get('conditions', []), variable_state):
+                    continue
+
+                matched_incoming_jump = incoming
+                break
+
+            scene_active = matched_incoming_jump is not None
         else:
             scene_active = True
 
-        if scene_node in scene_activation_overrides:
+        if not scene_active:
+            previous_scene_node = scene_node_by_input_index.get(scene_index - 1)
+            if previous_scene_node and scene_active_by_node.get(previous_scene_node, False):
+                previous_scene = data.get('seasons', {}).get(previous_scene_node[0], {}).get(previous_scene_node[1], {})
+                previous_file = str(previous_scene.get('file_path') or '').strip().replace('\\', '/')
+                current_file = str(scene.get('file_path') or '').strip().replace('\\', '/')
+                same_file = previous_file and current_file and previous_file == current_file
+
+                if same_file and not scene_has_true_jump_by_node.get(previous_scene_node, False):
+                    scene_active = True
+
+                # Handle same-file jump detours where the previous active scene jumps
+                # to a nearby label that then jumps back to this label.
+                if same_file and not scene_active and scene_has_true_jump_by_node.get(previous_scene_node, False):
+                    detour_target_label = str(scene_true_jump_target_by_node.get(previous_scene_node) or '').strip()
+                    detour_target_node = resolve_jump_target_node(previous_scene_node[0], detour_target_label)
+                    if detour_target_node:
+                        detour_scene = data.get('seasons', {}).get(detour_target_node[0], {}).get(detour_target_node[1], {})
+                        for detour_jump in detour_scene.get('jumps', []):
+                            detour_target = resolve_jump_target_node(detour_target_node[0], detour_jump.get('target'))
+                            if detour_target != scene_node:
+                                continue
+
+                            if evaluate_condition_list(detour_jump.get('conditions', []), variable_state):
+                                scene_active = True
+                                break
+
+        scene_override_info = scene_activation_overrides.get(scene_node)
+        if scene_override_info:
             scene_active = True
 
         scene_state_key = f"{season}::{label}"
@@ -465,6 +645,7 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
         dialogues = scene.get('dialogues', [])
         choices = scene.get('choices', [])
         state_actions = scene.get('state_actions', [])
+        scene_jumps = scene.get('jumps', [])
 
         if isinstance(state_actions, list):
             state_actions = sorted(
@@ -490,6 +671,85 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
         else:
             choices = []
 
+        choice_line_lookup = build_choice_line_lookup(choices)
+        scene_selected_choice_driver_texts = []
+
+        scene_activation_condition_drivers = []
+        if matched_incoming_jump:
+            source_node = matched_incoming_jump.get('source')
+            source_lookup = {}
+            if isinstance(source_node, tuple) and len(source_node) == 2:
+                source_scene = data.get('seasons', {}).get(source_node[0], {}).get(source_node[1], {})
+                source_lookup = build_choice_line_lookup(source_scene.get('choices', []))
+
+            source_name = ''
+            if isinstance(source_node, tuple) and len(source_node) == 2:
+                source_name = str(source_node[1] or '').strip()
+
+            incoming_conditions = matched_incoming_jump.get('conditions', [])
+            if isinstance(incoming_conditions, list):
+                for condition in incoming_conditions:
+                    described = describe_condition_for_diff(condition, source_lookup)
+                    if not described:
+                        continue
+
+                    if source_name:
+                        scene_activation_condition_drivers.append(f"scene gate from {source_name}: {described}")
+                    else:
+                        scene_activation_condition_drivers.append(f"scene gate: {described}")
+
+        if scene_override_info:
+            source_node = scene_override_info.get('source_scene')
+            source_name = ''
+            if isinstance(source_node, tuple) and len(source_node) == 2:
+                source_name = str(source_node[1] or '').strip()
+
+            override_choice = str(scene_override_info.get('choice_driver') or '').strip()
+            if override_choice:
+                if source_name:
+                    scene_activation_condition_drivers.append(f"scene jump from {source_name}: {override_choice}")
+                else:
+                    scene_activation_condition_drivers.append(f"scene jump: {override_choice}")
+
+            override_conditions = scene_override_info.get('conditions', [])
+            if isinstance(override_conditions, list):
+                for condition in override_conditions:
+                    described = describe_condition_for_diff(condition, choice_line_lookup)
+                    if not described:
+                        continue
+                    scene_activation_condition_drivers.append(f"scene jump condition: {described}")
+
+        scene_activation_condition_drivers = dedupe_text_list(scene_activation_condition_drivers)
+
+        if isinstance(scene_jumps, list):
+            scene_jumps = sorted(
+                scene_jumps,
+                key=lambda jump: (
+                    jump.get('line_number', 10**9)
+                    if isinstance(jump, dict)
+                    else 10**9
+                )
+            )
+        else:
+            scene_jumps = []
+
+        jump_conditions_by_signature = {}
+        for jump in scene_jumps:
+            if not isinstance(jump, dict):
+                continue
+
+            jump_line = jump.get('line_number')
+            jump_target = str(jump.get('target') or '').strip()
+            if not isinstance(jump_line, int) or not jump_target:
+                continue
+
+            key = (jump_line, jump_target)
+            conditions = jump.get('conditions', [])
+            if not isinstance(conditions, list):
+                conditions = []
+
+            jump_conditions_by_signature.setdefault(key, []).append(list(conditions))
+
         resolved_scenes.append({
             'season': season,
             'label': label,
@@ -502,6 +762,9 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
         scene_active_by_node[scene_node] = scene_active
 
         state_action_cursor = 0
+        scene_jump_cursor = 0
+        scene_exited_by_jump = False
+        scene_exit_jump_info = None
 
         def apply_state_actions_until(max_line_exclusive=None):
             nonlocal state_action_cursor
@@ -530,6 +793,37 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
 
                 apply_choice_action(action, variable_state)
 
+        def apply_scene_jumps_until(max_line_exclusive=None):
+            nonlocal scene_jump_cursor, scene_exited_by_jump, scene_exit_jump_info
+
+            if not scene_active or scene_exited_by_jump:
+                return
+
+            while scene_jump_cursor < len(scene_jumps):
+                jump = scene_jumps[scene_jump_cursor]
+                jump_line = (
+                    jump.get('line_number')
+                    if isinstance(jump, dict) and isinstance(jump.get('line_number'), int)
+                    else 10**9
+                )
+
+                if max_line_exclusive is not None and jump_line >= max_line_exclusive:
+                    break
+
+                scene_jump_cursor += 1
+
+                if not isinstance(jump, dict):
+                    continue
+
+                if evaluate_condition_list(jump.get('conditions', []), variable_state):
+                    scene_exited_by_jump = True
+                    scene_exit_jump_info = {
+                        'line_number': jump.get('line_number'),
+                        'target': str(jump.get('target') or '').strip(),
+                        'conditions': list(jump.get('conditions', [])) if isinstance(jump.get('conditions'), list) else []
+                    }
+                    break
+
         for choice_index, choice in enumerate(choices):
             if not isinstance(choice, dict):
                 continue
@@ -541,6 +835,9 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
             )
             if choice_line_for_order is not None:
                 apply_state_actions_until(choice_line_for_order)
+                apply_scene_jumps_until(choice_line_for_order)
+
+            scene_path_active = scene_active and not scene_exited_by_jump
 
             options = choice.get('options', [])
             if not isinstance(options, list) or len(options) == 0:
@@ -559,7 +856,7 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
             available_indices = []
             for option_index, option in enumerate(options):
                 option_active = (
-                    scene_active and
+                    scene_path_active and
                     parent_branch_active and
                     evaluate_condition_list(option.get('conditions', []), variable_state)
                 )
@@ -577,16 +874,32 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
 
             choice_key = f"{season}::{label}::{choice_index}"
             requested_index = choice_selections.get(choice_key)
+            requested_provided = choice_key in choice_selections
             requested_is_valid = isinstance(requested_index, int) and 0 <= requested_index < len(options)
+            choice_active = scene_path_active and parent_branch_active and bool(available_indices)
 
-            if requested_is_valid and requested_index in available_indices:
+            # Inactive choices are always non-mutating, even when a stale selection exists.
+            if not choice_active:
+                selected_index = None
+                if requested_is_valid:
+                    selection_source = 'explicit_inactive'
+                elif requested_provided:
+                    selection_source = 'invalid_request'
+                else:
+                    selection_source = 'undefined'
+            elif requested_is_valid and requested_index in available_indices:
                 selected_index = requested_index
-            elif available_indices:
-                selected_index = available_indices[0]
+                selection_source = 'explicit'
+            elif requested_is_valid:
+                selected_index = None
+                selection_source = 'explicit_inactive'
+            elif requested_provided:
+                selected_index = None
+                selection_source = 'invalid_request'
             else:
                 selected_index = None
+                selection_source = 'undefined'
 
-            choice_active = parent_branch_active and bool(available_indices)
             choice_line_number = choice.get('line_number')
 
             if include_choice_states:
@@ -597,19 +910,30 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
                     'choice_index': choice_index,
                     'line_number': choice_line_number,
                     'active': choice_active,
+                    'scene_path_active': scene_path_active,
+                    'blocked_by_scene_jump': scene_active and scene_exited_by_jump,
+                    'blocking_jump': scene_exit_jump_info,
                     'parent_branch_active': parent_branch_active,
                     'parent_choice_line': parent_choice_line,
                     'parent_option_index': parent_option_index,
                     'parent_option_text': parent_option_text,
+                    'requested_option_index': requested_index if requested_provided else None,
                     'available_option_indices': available_indices,
                     'selected_option_index': selected_index,
+                    'selection_source': selection_source,
                     'options': option_states
                 }
 
-            if selected_index is None:
+            if selected_index is None or not choice_active:
                 continue
 
-            if not scene_active:
+            if not scene_path_active:
+                continue
+
+            if selected_index < 0 or selected_index >= len(option_states):
+                continue
+
+            if not option_states[selected_index].get('active'):
                 continue
 
             if isinstance(choice_line_number, int):
@@ -618,6 +942,15 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
 
             selected_option = options[selected_index]
             selected_text = str(selected_option.get('text') or '').strip()
+            selected_choice_driver_text = build_selected_choice_driver_text(
+                choice_index,
+                choice_line_number,
+                selected_index,
+                selected_text
+            )
+            scene_selected_choice_driver_texts.append(selected_choice_driver_text)
+            scene_selected_choice_driver_texts = dedupe_text_list(scene_selected_choice_driver_texts)
+
             selected_choices.append({
                 'key': choice_key,
                 'season': season,
@@ -634,15 +967,52 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
                     'line_number': selected_option.get('line_number'),
                     'season': season,
                     'label': label,
-                    'scene_index': scene_index
+                    'scene_index': scene_index,
+                    'influence_source': 'choice',
+                    'influence_conditions': list(scene_activation_condition_drivers),
+                    'influence_choices': [selected_choice_driver_text]
                 })
 
             for action in selected_option.get('actions', []):
                 if str(action.get('type') or '').strip() == 'jump':
+                    action_target = str(action.get('target') or '').strip()
+                    action_line = action.get('line_number') if isinstance(action.get('line_number'), int) else None
+
+                    action_condition_sets = []
+                    if isinstance(action.get('conditions'), list):
+                        action_condition_sets = [list(action.get('conditions'))]
+                    elif action_line is not None and action_target:
+                        action_condition_sets = jump_conditions_by_signature.get((action_line, action_target), [])
+
+                    matched_conditions = []
+                    if action_condition_sets:
+                        jump_allowed = False
+                        for condition_set in action_condition_sets:
+                            if evaluate_condition_list(condition_set, variable_state):
+                                jump_allowed = True
+                                matched_conditions = list(condition_set)
+                                break
+                        if not jump_allowed:
+                            continue
+
                     target_node = resolve_jump_target_node(season, action.get('target'))
                     if target_node:
-                        scene_activation_overrides.add(target_node)
-                    continue
+                        scene_activation_overrides.setdefault(
+                            target_node,
+                            {
+                                'source_scene': scene_node,
+                                'choice_driver': selected_choice_driver_text,
+                                'line_number': action.get('line_number'),
+                                'conditions': list(matched_conditions)
+                            }
+                        )
+                    scene_exited_by_jump = True
+                    scene_exit_jump_info = {
+                        'line_number': action.get('line_number'),
+                        'target': str(action.get('target') or '').strip(),
+                        'conditions': matched_conditions
+                    }
+                    break
 
                 applied = apply_choice_action(action, variable_state)
                 if not applied:
@@ -657,15 +1027,33 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
                         'line_number': applied.get('line_number'),
                         'season': season,
                         'label': label,
-                        'scene_index': scene_index
+                        'scene_index': scene_index,
+                        'influence_source': 'choice_action',
+                        'influence_conditions': list(scene_activation_condition_drivers),
+                        'influence_choices': [selected_choice_driver_text]
                     })
 
         apply_state_actions_until()
+        apply_scene_jumps_until()
 
         if include_dialogues and scene_active:
             for dialogue in dialogues:
-                if not evaluate_condition_list(dialogue.get('conditions', []), variable_state):
+                dialogue_conditions = dialogue.get('conditions', [])
+                if not evaluate_condition_list(dialogue_conditions, variable_state):
                     continue
+
+                dialogue_condition_drivers = []
+                if isinstance(dialogue_conditions, list):
+                    for condition in dialogue_conditions:
+                        described = describe_condition_for_diff(condition, choice_line_lookup)
+                        if described:
+                            dialogue_condition_drivers.append(f"line condition: {described}")
+
+                influence_conditions = dedupe_text_list([
+                    *scene_activation_condition_drivers,
+                    *dialogue_condition_drivers
+                ])
+                influence_choices = dedupe_text_list(scene_selected_choice_driver_texts)
 
                 collected_dialogues.append({
                     'speaker': dialogue.get('speaker', ''),
@@ -673,8 +1061,20 @@ def materialize_playthrough(playthrough_data, data, include_dialogues=True, incl
                     'line_number': dialogue.get('line_number'),
                     'season': season,
                     'label': label,
-                    'scene_index': scene_index
+                    'scene_index': scene_index,
+                    'influence_source': 'dialogue',
+                    'influence_conditions': influence_conditions,
+                    'influence_choices': influence_choices
                 })
+
+        scene_true_jump = scene_active and scene_exited_by_jump
+
+        scene_has_true_jump_by_node[scene_node] = scene_true_jump
+        scene_true_jump_target_by_node[scene_node] = (
+            str(scene_exit_jump_info.get('target') or '').strip()
+            if scene_exit_jump_info and scene_true_jump
+            else ''
+        )
 
     active_scene_count = sum(1 for scene_state in scene_states.values() if scene_state.get('active'))
     inactive_scene_count = max(0, len(scene_states) - active_scene_count)
@@ -711,7 +1111,10 @@ def diff_line_payload(dialogue, position):
         'season': dialogue.get('season', ''),
         'label': dialogue.get('label', ''),
         'line_number': dialogue.get('line_number'),
-        'scene_index': dialogue.get('scene_index')
+        'scene_index': dialogue.get('scene_index'),
+        'influence_source': dialogue.get('influence_source', ''),
+        'influence_conditions': dialogue.get('influence_conditions', []),
+        'influence_choices': dialogue.get('influence_choices', [])
     }
 
 
@@ -1287,7 +1690,20 @@ def refresh_data():
 if __name__ == '__main__':
     # Ensure static directory exists
     os.makedirs('static', exist_ok=True)
+
+    host = '0.0.0.0'
+    port = 5000
+    debug_enabled = True
+
+    browser_host = 'localhost' if host in {'0.0.0.0', '::'} else host
+    app_url = f"http://{browser_host}:{port}"
     
     print("Starting Walkthrough Builder server...")
-    print("Open http://localhost:5000 in your browser")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"Open {app_url} in your browser")
+
+    if should_auto_open_browser(debug_enabled):
+        delay_seconds = max(0.1, float(os.environ.get('SG_AUTO_OPEN_DELAY_SECONDS', '1.0')))
+        Timer(delay_seconds, auto_open_browser, args=(app_url,)).start()
+        print("Auto-opening browser tab...")
+
+    app.run(host=host, port=port, debug=debug_enabled)

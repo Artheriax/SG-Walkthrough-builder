@@ -594,6 +594,39 @@
             color: #98bdce;
         }
 
+        .choice-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.42rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .choice-header-row .choice-header {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .choice-clear-btn {
+            padding: 0.16rem 0.42rem;
+            font-size: 0.68rem;
+            border-color: #566949;
+            background: #2a3720;
+            color: #d7e8b4;
+        }
+
+        .choice-clear-btn:hover {
+            border-color: #a8c17c;
+            background: #344525;
+        }
+
+        .choice-clear-btn:disabled {
+            border-color: #465244;
+            background: #2a2e2a;
+            color: #8f9a8f;
+            cursor: not-allowed;
+        }
+
         .choice-option-list {
             margin: 0.36rem 0 0 1.05rem;
             display: flex;
@@ -764,7 +797,7 @@
 
         .diff-row {
             display: grid;
-            grid-template-columns: 52px 52px 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 0;
             border-bottom: 1px solid #203947;
             font-family: "IBM Plex Mono", monospace;
@@ -775,19 +808,44 @@
             border-bottom: none;
         }
 
-        .diff-row.add {
-            background: #132e21;
+        .diff-cell {
+            display: grid;
+            grid-template-columns: 52px minmax(0, 1fr);
+            min-width: 0;
         }
 
-        .diff-row.remove {
-            background: #321b22;
+        .diff-cell.left {
+            border-right: 1px solid #27404d;
         }
 
-        .diff-row.context {
+        .diff-row.context .diff-cell {
             background: #142732;
         }
 
-        .diff-row .num {
+        .diff-row.remove .diff-cell.left,
+        .diff-row.change .diff-cell.left {
+            background: #321b22;
+        }
+
+        .diff-row.remove .diff-cell.right {
+            background: #142732;
+        }
+
+        .diff-row.add .diff-cell.left {
+            background: #142732;
+        }
+
+        .diff-row.add .diff-cell.right,
+        .diff-row.change .diff-cell.right {
+            background: #132e21;
+        }
+
+        .diff-cell.empty .line-main,
+        .diff-cell.empty .line-meta {
+            color: #6d8593;
+        }
+
+        .diff-cell .num {
             color: #7f9aa8;
             border-right: 1px solid #27404d;
             padding: 0.35rem 0.45rem;
@@ -795,37 +853,43 @@
             user-select: none;
         }
 
-        .diff-row .content {
+        .diff-cell .content {
             padding: 0.35rem 0.5rem;
             min-width: 0;
         }
 
-        .diff-row .line-main {
+        .diff-cell .line-main {
             display: block;
             color: #d7e6ed;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        .diff-row .line-main .prefix {
+        .diff-cell .line-main .prefix {
             display: inline-block;
             width: 1.2rem;
             color: #9eb8c7;
         }
 
-        .diff-row.add .line-main .prefix {
-            color: #76e4b2;
-        }
-
-        .diff-row.remove .line-main .prefix {
+        .diff-row.remove .diff-cell.left .line-main .prefix,
+        .diff-row.change .diff-cell.left .line-main .prefix {
             color: #ff9ba2;
         }
 
-        .diff-row .line-meta {
+        .diff-row.add .diff-cell.right .line-main .prefix,
+        .diff-row.change .diff-cell.right .line-main .prefix {
+            color: #76e4b2;
+        }
+
+        .diff-cell .line-meta {
             display: block;
             margin-top: 0.2rem;
             color: #83a0af;
             font-size: 0.67rem;
+        }
+
+        .diff-cell .line-meta.influence {
+            color: #9dc7aa;
         }
 
         .group {
@@ -886,13 +950,18 @@
                 min-height: auto;
             }
 
-            .builder-grid,
             .compare-meta,
             .stats-grid {
                 grid-template-columns: 1fr;
             }
 
             .scene-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .builder-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -922,7 +991,7 @@
                         <div class="builder-title">
                             <input id="left-name" class="input" type="text" maxlength="50" placeholder="Left playthrough name">
                         </div>
-                        <p class="builder-hint mono">Auto-loaded full story. Pick choice options here to define this side's variable path.</p>
+                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an option.</p>
                         <ul id="left-sequence" class="sequence"></ul>
                         <div id="left-summary" class="summary"></div>
                     </article>
@@ -931,7 +1000,7 @@
                         <div class="builder-title">
                             <input id="right-name" class="input" type="text" maxlength="50" placeholder="Right playthrough name">
                         </div>
-                        <p class="builder-hint mono">Auto-loaded full story. Pick different options here to create branch differences.</p>
+                        <p class="builder-hint mono">Auto-loaded full story. Choices stay undefined until you pick an option.</p>
                         <ul id="right-sequence" class="sequence"></ul>
                         <div id="right-summary" class="summary"></div>
                     </article>
@@ -945,7 +1014,7 @@
                 </div>
 
                 <div id="compare-results" class="compare-results">
-                    <div class="notice">The full story is loaded on both sides. Click Compare Playthroughs.</div>
+                    <div class="notice">The full story is loaded on both sides. Choices are undefined until selected.</div>
                 </div>
             </section>
         </main>
@@ -1019,11 +1088,34 @@
                 await renderPlaythrough('left');
                 await renderPlaythrough('right');
                 persistPlaythroughs();
-                setCompareNotice('Both sides were reloaded with the full story.');
+                setCompareNotice('Both sides were reloaded with the full story and undefined choices.');
             });
 
             ['left', 'right'].forEach(side => {
                 document.getElementById(`${side}-sequence`).addEventListener('click', async event => {
+                    const clearButton = event.target.closest('button[data-choice-action="clear-selection"]');
+                    if (clearButton) {
+                        if (clearButton.disabled) {
+                            return;
+                        }
+
+                        const choiceKey = String(clearButton.dataset.choiceKey || '').trim();
+                        if (!choiceKey) {
+                            return;
+                        }
+
+                        if (!state.playthroughs[side].choice_selections || typeof state.playthroughs[side].choice_selections !== 'object') {
+                            state.playthroughs[side].choice_selections = {};
+                        }
+
+                        if (Object.prototype.hasOwnProperty.call(state.playthroughs[side].choice_selections, choiceKey)) {
+                            delete state.playthroughs[side].choice_selections[choiceKey];
+                            persistPlaythroughs();
+                            await renderPlaythrough(side);
+                        }
+                        return;
+                    }
+
                     const optionButton = event.target.closest('button[data-choice-action="select-option"]');
                     if (!optionButton) {
                         return;
@@ -1066,7 +1158,7 @@
             document.getElementById('right-name').value = state.playthroughs.right.name;
             await renderPlaythrough('left');
             await renderPlaythrough('right');
-            setCompareNotice('Loaded full story on both sides. Click Compare Playthroughs.');
+            setCompareNotice('Loaded full story on both sides. Route choices are undefined until selected.');
         }
 
         async function loadTimeline() {
@@ -1284,7 +1376,7 @@
                 return parsed;
             }
 
-            return 0;
+            return -1;
         }
 
         function getSceneSummary(season, label) {
@@ -1326,9 +1418,16 @@
                 const hasChoiceState = Object.keys(choiceState).length > 0;
                 const parentBranchActive = choiceState.parent_branch_active !== false;
                 const choiceActive = choiceState.active !== false;
+                const blockedByJump = choiceState.blocked_by_scene_jump === true;
+                const blockingJump = (choiceState && typeof choiceState.blocking_jump === 'object' && choiceState.blocking_jump)
+                    ? choiceState.blocking_jump
+                    : null;
+                const blockingJumpLineRaw = blockingJump ? Number(blockingJump.line_number) : NaN;
+                const blockingJumpLine = Number.isFinite(blockingJumpLineRaw) ? blockingJumpLineRaw : null;
+                const blockingJumpTarget = blockingJump ? String(blockingJump.target || '').trim() : '';
 
-                const selectedFromPreview = Number(choiceState.selected_option_index);
-                const selectedOptionIndex = Number.isInteger(selectedFromPreview)
+                const selectedFromPreview = choiceState.selected_option_index;
+                const selectedOptionIndex = (typeof selectedFromPreview === 'number' && Number.isInteger(selectedFromPreview))
                     ? selectedFromPreview
                     : (hasChoiceState ? -1 : selectedOptionIndexForChoice(side, sceneRef, choiceIndex, options.length));
 
@@ -1337,7 +1436,16 @@
                         ? ` | requires parent option: ${String(choiceState.parent_option_text)}`
                         : ' | nested branch inactive')
                     : '';
+                const jumpReason = (!choiceActive && blockedByJump)
+                    ? (blockingJumpLine !== null
+                        ? ` | blocked by jump line ${blockingJumpLine}${blockingJumpTarget ? ` -> ${blockingJumpTarget}` : ''}`
+                        : ' | blocked by earlier jump')
+                    : '';
                 const statusText = choiceActive ? 'active' : 'inactive';
+                const selectionMap = (state.playthroughs[side] && typeof state.playthroughs[side] === 'object' && state.playthroughs[side].choice_selections && typeof state.playthroughs[side].choice_selections === 'object')
+                    ? state.playthroughs[side].choice_selections
+                    : {};
+                const hasStoredSelection = Object.prototype.hasOwnProperty.call(selectionMap, choiceKey);
 
                 const optionsMarkup = options.length > 0
                     ? `<ol class="choice-option-list">${options.map((option, optionIndex) => {
@@ -1352,6 +1460,14 @@
                         const isSelected = optionIndex === selectedOptionIndex;
                         const isOptionActive = optionState ? Boolean(optionState.active) : choiceActive;
                         const optionStatus = isOptionActive ? 'active' : 'inactive';
+                        const selectionSource = String(choiceState.selection_source || '').trim();
+                        const selectionReason = isSelected
+                            ? (
+                                selectionSource === 'explicit'
+                                    ? ' | explicit selection'
+                                    : ''
+                            )
+                            : '';
 
                         return `
                             <li class="choice-option">
@@ -1365,7 +1481,7 @@
                                     ${isOptionActive ? '' : 'disabled'}
                                 >
                                     <span class="option-text">${optionIndex + 1}. ${escapeHtml(option.text || '(empty option)')}</span>
-                                    <span class="option-meta">line ${escapeHtml(String(optionLine))} | ${optionStatus}${isSelected ? ' | selected' : ''}</span>
+                                    <span class="option-meta">line ${escapeHtml(String(optionLine))} | ${optionStatus}${isSelected ? ' | selected' : ''}${selectionReason}</span>
                                 </button>
                                 ${renderConditionTags(mergedConditions)}
                             </li>
@@ -1375,7 +1491,18 @@
 
                 return `
                     <div class="choice-event ${choiceActive ? '' : 'inactive'}">
-                        <div class="choice-header">Choice ${choiceIndex + 1} | line ${escapeHtml(String(lineNumber))} | ${statusText}${escapeHtml(nestedReason)}</div>
+                        <div class="choice-header-row">
+                            <div class="choice-header">Choice ${choiceIndex + 1} | line ${escapeHtml(String(lineNumber))} | ${statusText}${escapeHtml(nestedReason)}${escapeHtml(jumpReason)}</div>
+                            <button
+                                class="mini-btn choice-clear-btn"
+                                type="button"
+                                data-choice-action="clear-selection"
+                                data-choice-key="${escapeHtml(choiceKey)}"
+                                ${hasStoredSelection ? '' : 'disabled'}
+                            >
+                                Clear selection
+                            </button>
+                        </div>
                         ${menuConditions.length > 0 ? renderConditionTags(menuConditions) : ''}
                         ${optionsMarkup}
                     </div>
@@ -1568,7 +1695,7 @@
 
         function renderDiffHunk(hunk) {
             const lines = Array.isArray(hunk.lines) ? hunk.lines : [];
-            const rows = lines.map(line => renderDiffRow(line)).join('');
+            const rows = buildSideBySideDiffRows(lines).map(line => renderDiffRow(line)).join('');
             return `
                 <section class="diff-hunk">
                     <div class="diff-hunk-header">${escapeHtml(hunk.header || '@@')}</div>
@@ -1577,35 +1704,151 @@
             `;
         }
 
-        function renderDiffRow(line) {
-            const type = line.type || 'context';
-            const klass = type === 'add' ? 'add' : (type === 'remove' ? 'remove' : 'context');
-            const left = line.left || null;
-            const right = line.right || null;
-            const source = right || left || {};
+        function buildSideBySideDiffRows(lines) {
+            const rows = [];
 
-            const leftNumber = left ? left.position : '';
-            const rightNumber = right ? right.position : '';
+            for (let index = 0; index < lines.length;) {
+                const line = lines[index] || {};
+                const type = line.type || 'context';
 
-            let prefix = ' ';
-            if (type === 'add') {
-                prefix = '+';
-            } else if (type === 'remove') {
-                prefix = '-';
+                if (type === 'context') {
+                    rows.push({
+                        type: 'context',
+                        left: line.left || null,
+                        right: line.right || null
+                    });
+                    index += 1;
+                    continue;
+                }
+
+                if (type !== 'remove' && type !== 'add') {
+                    rows.push({
+                        type: 'context',
+                        left: line.left || null,
+                        right: line.right || null
+                    });
+                    index += 1;
+                    continue;
+                }
+
+                const removed = [];
+                const added = [];
+
+                while (index < lines.length && (lines[index].type || 'context') === 'remove') {
+                    removed.push(lines[index]);
+                    index += 1;
+                }
+
+                while (index < lines.length && (lines[index].type || 'context') === 'add') {
+                    added.push(lines[index]);
+                    index += 1;
+                }
+
+                const rowCount = Math.max(removed.length, added.length);
+                for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+                    const removedLine = removed[rowIndex] || null;
+                    const addedLine = added[rowIndex] || null;
+
+                    let rowType = 'change';
+                    if (removedLine && !addedLine) {
+                        rowType = 'remove';
+                    } else if (!removedLine && addedLine) {
+                        rowType = 'add';
+                    }
+
+                    rows.push({
+                        type: rowType,
+                        left: removedLine ? (removedLine.left || null) : null,
+                        right: addedLine ? (addedLine.right || null) : null
+                    });
+                }
             }
 
-            const speaker = source.speaker || 'Narrator';
-            const text = source.text || '';
-            const lineNumber = source.line_number ?? '-';
-            const location = `${source.season || '?'} :: ${source.label || '?'} | line ${lineNumber}`;
+            return rows;
+        }
+
+        function renderDiffRow(line) {
+            const type = line.type || 'context';
+            const klass = (type === 'add' || type === 'remove' || type === 'change') ? type : 'context';
+            const leftPrefix = (klass === 'remove' || klass === 'change') ? '-' : ' ';
+            const rightPrefix = (klass === 'add' || klass === 'change') ? '+' : ' ';
 
             return `
                 <div class="diff-row ${klass}">
-                    <div class="num">${escapeHtml(String(leftNumber))}</div>
-                    <div class="num">${escapeHtml(String(rightNumber))}</div>
+                    ${renderDiffCell(line.left || null, leftPrefix, 'left')}
+                    ${renderDiffCell(line.right || null, rightPrefix, 'right')}
+                </div>
+            `;
+        }
+
+        function summarizeLineInfluence(line) {
+            if (!line || typeof line !== 'object') {
+                return '';
+            }
+
+            const limitList = (items, limit = 2) => {
+                if (!Array.isArray(items)) {
+                    return [];
+                }
+
+                const cleaned = items
+                    .map(item => String(item || '').trim())
+                    .filter(Boolean);
+
+                if (cleaned.length <= limit) {
+                    return cleaned;
+                }
+
+                return [...cleaned.slice(0, limit), `+${cleaned.length - limit} more`];
+            };
+
+            const choiceDrivers = limitList(line.influence_choices);
+            const conditionDrivers = limitList(line.influence_conditions);
+            const source = String(line.influence_source || '').trim();
+
+            const parts = [];
+            if (choiceDrivers.length > 0) {
+                parts.push(`choice: ${choiceDrivers.join(' ; ')}`);
+            }
+            if (conditionDrivers.length > 0) {
+                parts.push(`condition: ${conditionDrivers.join(' ; ')}`);
+            }
+            if (parts.length === 0 && source && source !== 'dialogue') {
+                parts.push(`source: ${source}`);
+            }
+
+            return parts.join(' | ');
+        }
+
+        function renderDiffCell(line, prefix, side) {
+            if (!line) {
+                return `
+                    <div class="diff-cell ${side} empty">
+                        <div class="num"></div>
+                        <div class="content">
+                            <span class="line-main"><span class="prefix">${escapeHtml(prefix)}</span></span>
+                            <span class="line-meta"></span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const speaker = line.speaker || 'Narrator';
+            const text = line.text || '';
+            const lineNumber = line.line_number ?? '-';
+            const location = `${line.season || '?'} :: ${line.label || '?'} | line ${lineNumber}`;
+            const influence = summarizeLineInfluence(line);
+            const influenceMarkup = influence
+                ? `<span class="line-meta influence">${escapeHtml(influence)}</span>`
+                : '';
+
+            return `
+                <div class="diff-cell ${side}">
+                    <div class="num">${escapeHtml(String(line.position || ''))}</div>
                     <div class="content">
-                        <span class="line-main"><span class="prefix">${prefix}</span>${escapeHtml(speaker)}: ${escapeHtml(text)}</span>
+                        <span class="line-main"><span class="prefix">${escapeHtml(prefix)}</span>${escapeHtml(speaker)}: ${escapeHtml(text)}</span>
                         <span class="line-meta">${escapeHtml(location)}</span>
+                        ${influenceMarkup}
                     </div>
                 </div>
             `;
