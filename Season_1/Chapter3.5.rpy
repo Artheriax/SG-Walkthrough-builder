@@ -1,4 +1,21 @@
 label chapter3x5:
+    define md = Character('Maitre dhotel' , color="#11D7EE")
+    define mf = Character('Stefan Holgerson' , color="#513fEE")
+    define el = Character('Elsa' , color="#481f5E")
+    define bre = Character('Brenda' , color="#A44932")
+    define bart = Character('Bartender' , color="#C58932")
+    define mik = Character('Mikey' , color="#6E5C47")
+    define sak = Character('Saki' , color="#ECFF00")
+    define rep = Character('Reporter' , color="#00FFF0")
+    define nico = Character('Nicole' , color="#00FFF0")
+    define zar = Character('Zara' , color="#FF6800")
+    define jak = Character('Jake' , color="#FF9DE9")
+    define dwi = Character('Dwight' , color="#6CA2FF")
+    define dex = Character('Dex' , color="#424BC8")
+    define az = Character('Aziz' , color="#FF3E18")
+    define jaz = Character('Jazz' , color="#FFB600")
+    define lar = Character('Larry' , color="#00FF8F")
+
     $ persistent.unlockedImageS1 = True
     $ persistent.unlockedImageR1 = True
     $ BMCL = False
