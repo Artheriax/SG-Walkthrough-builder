@@ -73,18 +73,18 @@ Then open http://localhost:5000.
 
 ## API Endpoints
 
-| Endpoint | Method | Purpose |
-| --- | --- | --- |
-| /api/data | GET | Full extracted dataset |
-| /api/seasons | GET | List available seasons |
-| /api/season/<season> | GET | Scenes within a season |
-| /api/scene/<season>/<label> | GET | Single scene payload |
-| /api/labels | GET | Label metadata |
-| /api/timeline | GET | Scene timeline with reachability |
-| /api/search?q=<query> | GET | Dialogue search |
-| /api/compare | POST | Compare two scenes |
-| /api/playthrough/compare | POST | Compare two playthrough streams |
-| /api/refresh | POST | Force full data refresh |
+| Endpoint                    | Method | Purpose                          |
+| --------------------------- | ------ | -------------------------------- |
+| /api/data                   | GET    | Full extracted dataset           |
+| /api/seasons                | GET    | List available seasons           |
+| /api/season/<season>        | GET    | Scenes within a season           |
+| /api/scene/<season>/<label> | GET    | Single scene payload             |
+| /api/labels                 | GET    | Label metadata                   |
+| /api/timeline               | GET    | Scene timeline with reachability |
+| /api/search?q=<query>       | GET    | Dialogue search                  |
+| /api/compare                | POST   | Compare two scenes               |
+| /api/playthrough/compare    | POST   | Compare two playthrough streams  |
+| /api/refresh                | POST   | Force full data refresh          |
 
 ## Auto-Open Browser Configuration
 
