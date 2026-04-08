@@ -139,3 +139,14 @@ Not included as standalone narrative output:
 2. Update source directory detection if needed.
 3. Run the app and verify labels/scenes are discovered correctly.
 4. I cannot 100% say this will work on every other project, because I made this specifically for games that were made in the way ``OceanAVN`` makes games.
+
+## License
+
+This repository uses a custom restricted license. See [LICENSE](LICENSE).
+
+Policy summary:
+
+- Allowed: personal use, local clone, and GitHub-native forks of this repository.
+- Not allowed: mirrors/reuploads/redistribution outside the GitHub fork network rooted at this repository.
+- Third-party Summer's Gone scripts/content remain owned by their original creator(s) and are not licensed by this repo.
+
