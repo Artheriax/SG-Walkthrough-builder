@@ -6,7 +6,7 @@ Extract and compare Ren'Py dialogue/branching data from Summer's Gone scripts us
 
 ## Disclaimer
 
-**I do not own the original .rpy source content in this repository.** <br>
+**I do not own the original .rpy source content in this repository and neither the story. (I only cleaned the files up so only the story, choices and conditions remain)** <br>
 **Summer's Gone is created by OceanAVN:** <br>
 His links: https://allmylinks.com/ocean-avn
 
