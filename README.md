@@ -21,6 +21,8 @@ His links: https://allmylinks.com/ocean-avn
 - Produces a continuous diff-style comparison across full playthroughs
 - Caches parsed output for fast reloads
 
+<img width="1860" height="868" alt="afbeelding" src="https://github.com/user-attachments/assets/a8148d76-0957-47b1-8da3-60e0f03a6b99" />
+
 ## Project Layout
 
 ```text
