@@ -981,9 +981,10 @@ def materialize_playthrough(
         scene_exited_by_call = False
         scene_exit_call_info = None
         scene_return_encountered = False
+        scene_return_line = None
 
         def apply_state_actions_until(max_line_exclusive=None):
-            nonlocal state_action_cursor
+            nonlocal state_action_cursor, scene_return_encountered, scene_return_line
 
             if not scene_active:
                 return
@@ -1015,8 +1016,11 @@ def materialize_playthrough(
 
                 result = apply_action(action, variable_state)
                 if result and result.get("type") == "return":
-                    nonlocal scene_return_encountered
                     scene_return_encountered = True
+                    return_line = result.get("line_number")
+                    if isinstance(return_line, int):
+                        if scene_return_line is None or return_line < scene_return_line:
+                            scene_return_line = return_line
 
         def apply_scene_jumps_until(max_line_exclusive=None):
             nonlocal scene_jump_cursor, scene_exited_by_jump, scene_exit_jump_info
@@ -1245,23 +1249,6 @@ def materialize_playthrough(
                 }
             )
 
-            if include_dialogues:
-                collected_dialogues.append(
-                    {
-                        "speaker": "Choice",
-                        "text": f"{label} choice {choice_index + 1}: {selected_text}",
-                        "line_number": selected_option.get("line_number"),
-                        "season": season,
-                        "label": label,
-                        "scene_index": scene_index,
-                        "influence_source": "choice",
-                        "influence_conditions": list(
-                            scene_activation_condition_drivers
-                        ),
-                        "influence_choices": [selected_choice_driver_text],
-                    }
-                )
-
             for action in selected_option.get("actions", []):
                 action_type = str(action.get("type") or "").strip()
                 if action_type == "jump":
@@ -1311,6 +1298,12 @@ def materialize_playthrough(
                     break
 
                 elif action_type == "call":
+                    action_conditions = action.get("conditions", [])
+                    if isinstance(action_conditions, list) and not evaluate_condition_list(
+                        action_conditions, variable_state
+                    ):
+                        continue
+
                     action_target = str(action.get("target") or "").strip()
                     target_node = resolve_jump_target_node(season, action_target)
                     if target_node:
@@ -1326,7 +1319,11 @@ def materialize_playthrough(
                         scene_exit_call_info = {
                             "line_number": action.get("line_number"),
                             "target": action_target,
-                            "conditions": [],
+                            "conditions": (
+                                list(action_conditions)
+                                if isinstance(action_conditions, list)
+                                else []
+                            ),
                         }
                         # Activate the called scene immediately if it's in the playthrough
                         scene_activation_overrides.setdefault(
@@ -1335,44 +1332,59 @@ def materialize_playthrough(
                                 "source_scene": scene_node,
                                 "choice_driver": selected_choice_driver_text,
                                 "line_number": action.get("line_number"),
-                                "conditions": [],
+                                "conditions": (
+                                    list(action_conditions)
+                                    if isinstance(action_conditions, list)
+                                    else []
+                                ),
                             },
                         )
                     break
 
                 else:
+                    action_conditions = action.get("conditions", [])
+                    if isinstance(action_conditions, list) and not evaluate_condition_list(
+                        action_conditions, variable_state
+                    ):
+                        continue
+
                     applied = apply_action(action, variable_state)
                     if not applied:
                         continue
-
-                    if include_dialogues:
-                        collected_dialogues.append(
-                            {
-                                "speaker": "State",
-                                "text": f"{applied.get('target', '')} {applied.get('op', '=')} {applied.get('expression', '')} => {applied.get('value', '')}",
-                                "line_number": applied.get("line_number"),
-                                "season": season,
-                                "label": label,
-                                "scene_index": scene_index,
-                                "influence_source": "choice_action",
-                                "influence_conditions": list(
-                                    scene_activation_condition_drivers
-                                ),
-                                "influence_choices": [selected_choice_driver_text],
-                            }
-                        )
 
         apply_state_actions_until()
         apply_scene_jumps_until()
         apply_scene_calls_until()
 
-        if (
-            include_dialogues
-            and scene_active
-            and not scene_exited_by_jump
-            and not scene_exited_by_call
-        ):
+        if include_dialogues and scene_active:
+            scene_exit_line_candidates = []
+
+            if isinstance(scene_exit_jump_info, dict):
+                jump_line = scene_exit_jump_info.get("line_number")
+                if isinstance(jump_line, int):
+                    scene_exit_line_candidates.append(jump_line)
+
+            if isinstance(scene_exit_call_info, dict):
+                call_line = scene_exit_call_info.get("line_number")
+                if isinstance(call_line, int):
+                    scene_exit_line_candidates.append(call_line)
+
+            if isinstance(scene_return_line, int):
+                scene_exit_line_candidates.append(scene_return_line)
+
+            dialogue_cutoff_line = (
+                min(scene_exit_line_candidates) if scene_exit_line_candidates else None
+            )
+
             for dialogue in dialogues:
+                dialogue_line_number = dialogue.get("line_number")
+                if (
+                    isinstance(dialogue_cutoff_line, int)
+                    and isinstance(dialogue_line_number, int)
+                    and dialogue_line_number >= dialogue_cutoff_line
+                ):
+                    continue
+
                 dialogue_conditions = dialogue.get("conditions", [])
                 if not evaluate_condition_list(dialogue_conditions, variable_state):
                     continue

@@ -13,7 +13,7 @@ from typing import List, Dict, Optional, Tuple, Any, Union
 from datetime import datetime
 
 
-PARSER_VERSION = "2026-04-enhanced-call-and-actions-v2"
+PARSER_VERSION = "2026-04-enhanced-call-and-actions-v4"
 
 
 @dataclass
@@ -230,7 +230,7 @@ class RPyParser:
             try:
                 with open(file_path, "r", encoding="utf-8") as handle:
                     for raw_line in handle:
-                        content = raw_line.rstrip("\n\r").lstrip()
+                        content = raw_line.rstrip("\n\r").lstrip().lstrip("\ufeff")
                         parsed = self.parse_character_definition(content)
                         if parsed:
                             alias, display_name = parsed
@@ -353,13 +353,55 @@ class RPyParser:
             )
             current_choices.append(choice_obj)
 
+        def merge_condition_lists(*condition_lists: Any) -> List[str]:
+            """Merge condition lists while preserving order and removing blanks."""
+            merged: List[str] = []
+            seen = set()
+
+            for condition_list in condition_lists:
+                if not isinstance(condition_list, list):
+                    continue
+
+                for condition in condition_list:
+                    normalized = str(condition or "").strip()
+                    if not normalized or normalized in seen:
+                        continue
+                    seen.add(normalized)
+                    merged.append(normalized)
+
+            return merged
+
+        def build_option_scoped_conditions(
+            menu_ctx: Optional[Dict[str, Any]], option_ctx: Optional[Dict[str, Any]]
+        ) -> List[str]:
+            """Attach option and menu branch conditions to nested lines."""
+            base_conditions = merge_condition_lists(active_conditions())
+
+            if not isinstance(menu_ctx, dict) or not isinstance(option_ctx, dict):
+                return base_conditions
+
+            option_conditions = merge_condition_lists(
+                option_ctx.get("conditions", []), active_conditions()
+            )
+
+            menu_start_line = menu_ctx.get("start_line")
+            option_index = option_ctx.get("option_index")
+            if isinstance(menu_start_line, int) and isinstance(option_index, int):
+                option_conditions = merge_condition_lists(
+                    option_conditions, [f"__choice_{menu_start_line} == {option_index}"]
+                )
+
+            return option_conditions
+
         with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         for line_num, line in enumerate(lines, 1):
             stripped = line.rstrip("\n\r")
             content = stripped.lstrip()
-            current_indent = len(stripped) - len(content)
+            if content.startswith("\ufeff"):
+                content = content[1:]
+            current_indent = len(stripped) - len(stripped.lstrip())
 
             # Check for label definitions
             label_match = self.LABEL_PATTERN.match(content)
@@ -474,15 +516,9 @@ class RPyParser:
                     current_option = active_menu.get("current_option")
                     current_option_indent = active_menu.get("current_option_indent", 0)
                     if current_option and current_indent > current_option_indent:
-                        option_index = current_option.get("option_index")
-                        menu_start_line = active_menu.get("start_line")
-                        if isinstance(menu_start_line, int) and isinstance(
-                            option_index, int
-                        ):
-                            jump_conditions = [
-                                *jump_conditions,
-                                f"__choice_{menu_start_line} == {option_index}",
-                            ]
+                        jump_conditions = build_option_scoped_conditions(
+                            active_menu, current_option
+                        )
 
                         current_option_actions = current_option.get("actions", [])
                         current_option_actions.append(
@@ -490,6 +526,7 @@ class RPyParser:
                                 "type": "jump",
                                 "target": jump_match.group("target").strip(),
                                 "line_number": line_num,
+                                "conditions": list(jump_conditions),
                             }
                         )
                         current_option["actions"] = current_option_actions
@@ -515,21 +552,16 @@ class RPyParser:
                     current_option = active_menu.get("current_option")
                     current_option_indent = active_menu.get("current_option_indent", 0)
                     if current_option and current_indent > current_option_indent:
-                        option_index = current_option.get("option_index")
-                        menu_start_line = active_menu.get("start_line")
-                        if isinstance(menu_start_line, int) and isinstance(
-                            option_index, int
-                        ):
-                            call_conditions = [
-                                *call_conditions,
-                                f"__choice_{menu_start_line} == {option_index}",
-                            ]
+                        call_conditions = build_option_scoped_conditions(
+                            active_menu, current_option
+                        )
                         current_option_actions = current_option.get("actions", [])
                         current_option_actions.append(
                             {
                                 "type": "call",
                                 "target": call_match.group("target").strip(),
                                 "line_number": line_num,
+                                "conditions": list(call_conditions),
                             }
                         )
                         current_option["actions"] = current_option_actions
@@ -554,12 +586,16 @@ class RPyParser:
                     current_option = active_menu.get("current_option")
                     current_option_indent = active_menu.get("current_option_indent", 0)
                     if current_option and current_indent > current_option_indent:
+                        call_screen_conditions = build_option_scoped_conditions(
+                            active_menu, current_option
+                        )
                         current_option_actions = current_option.get("actions", [])
                         current_option_actions.append(
                             {
                                 "type": "call_screen",
                                 "screen": call_screen_match.group("screen").strip(),
                                 "line_number": line_num,
+                                "conditions": list(call_screen_conditions),
                             }
                         )
                         current_option["actions"] = current_option_actions
@@ -578,6 +614,15 @@ class RPyParser:
             return_match = self.RETURN_PATTERN.match(content)
             if return_match:
                 return_conditions = active_conditions()
+                if menu_stack:
+                    active_menu = menu_stack[-1]
+                    current_option = active_menu.get("current_option")
+                    current_option_indent = active_menu.get("current_option_indent", 0)
+                    if current_option and current_indent > current_option_indent:
+                        return_conditions = build_option_scoped_conditions(
+                            active_menu, current_option
+                        )
+
                 current_state_actions.append(
                     {
                         "type": "return",
@@ -700,6 +745,10 @@ class RPyParser:
                     current_option = active_menu.get("current_option")
                     current_option_indent = active_menu.get("current_option_indent", 0)
                     if current_option and current_indent > current_option_indent:
+                        option_scoped_conditions = build_option_scoped_conditions(
+                            active_menu, current_option
+                        )
+
                         assignment_match = self.CHOICE_ASSIGNMENT_PATTERN.match(content)
                         if assignment_match:
                             current_option_actions = current_option.get("actions", [])
@@ -712,35 +761,134 @@ class RPyParser:
                                         "expr"
                                     ).strip(),
                                     "line_number": line_num,
+                                    "conditions": option_scoped_conditions,
                                 }
                             )
                             current_option["actions"] = current_option_actions
                             continue
 
-                        option_jump_match = self.JUMP_PATTERN.match(content)
-                        if option_jump_match:
-                            current_option_actions = current_option.get("actions", [])
-                            current_option_actions.append(
-                                {
-                                    "type": "jump",
-                                    "target": option_jump_match.group("target").strip(),
-                                    "line_number": line_num,
-                                }
+                        input_match = self.RENPY_INPUT_PATTERN.match(content)
+                        if input_match:
+                            target = input_match.group("target")
+                            args = input_match.group("args").strip()
+                            default_match = re.search(r'default\s*=\s*"([^"]*)"', args)
+                            default_value = (
+                                default_match.group(1) if default_match else ""
                             )
-                            current_option["actions"] = current_option_actions
 
-                        # Also capture calls inside options
-                        option_call_match = self.CALL_PATTERN.match(content)
-                        if option_call_match:
                             current_option_actions = current_option.get("actions", [])
                             current_option_actions.append(
                                 {
-                                    "type": "call",
-                                    "target": option_call_match.group("target").strip(),
+                                    "type": "input",
+                                    "target": target,
+                                    "default": default_value,
                                     "line_number": line_num,
+                                    "conditions": option_scoped_conditions,
                                 }
                             )
                             current_option["actions"] = current_option_actions
+                            continue
+
+                        persist_match = self.PERSISTENT_ASSIGN_PATTERN.match(content)
+                        if persist_match:
+                            attr = persist_match.group("attr")
+                            op = persist_match.group("op")
+                            expr = persist_match.group("expr").strip()
+
+                            current_option_actions = current_option.get("actions", [])
+                            current_option_actions.append(
+                                {
+                                    "type": "persistent_assign",
+                                    "target": f"persistent.{attr}",
+                                    "op": op,
+                                    "expression": expr,
+                                    "line_number": line_num,
+                                    "conditions": option_scoped_conditions,
+                                }
+                            )
+                            current_option["actions"] = current_option_actions
+                            continue
+
+                        default_persist_match = self.DEFAULT_PERSISTENT_PATTERN.match(
+                            content
+                        )
+                        if default_persist_match:
+                            attr = default_persist_match.group("attr")
+                            expr = default_persist_match.group("expr").strip()
+
+                            current_option_actions = current_option.get("actions", [])
+                            current_option_actions.append(
+                                {
+                                    "type": "persistent_default",
+                                    "target": f"persistent.{attr}",
+                                    "expression": expr,
+                                    "line_number": line_num,
+                                    "conditions": option_scoped_conditions,
+                                }
+                            )
+                            current_option["actions"] = current_option_actions
+                            continue
+
+                        method_match = self.METHOD_CALL_PATTERN.match(content)
+                        if method_match:
+                            target = method_match.group("target")
+                            method = method_match.group("method")
+                            args = method_match.group("args").strip()
+
+                            current_option_actions = current_option.get("actions", [])
+                            current_option_actions.append(
+                                {
+                                    "type": "method_call",
+                                    "target": target,
+                                    "method": method,
+                                    "args": args,
+                                    "line_number": line_num,
+                                    "conditions": option_scoped_conditions,
+                                }
+                            )
+                            current_option["actions"] = current_option_actions
+                            continue
+
+                        # Dialogue inside option blocks must stay tied to the selected option.
+                        if self.is_game_dialogue(line, content):
+                            dialogue_match = self.DIALOGUE_PATTERN.match(content)
+                            if dialogue_match:
+                                speaker = dialogue_match.group("speaker")
+                                text = dialogue_match.group("text")
+
+                                if speaker.lower() in (
+                                    "scene",
+                                    "show",
+                                    "hide",
+                                    "with",
+                                    "pause",
+                                    "stop",
+                                    "play",
+                                ):
+                                    continue
+
+                                dialogue = DialogueLine(
+                                    speaker=character_aliases.get(speaker, speaker),
+                                    text=text,
+                                    line_number=line_num,
+                                    label=self.current_label,
+                                    conditions=option_scoped_conditions,
+                                )
+                                current_dialogues.append(dialogue)
+                                continue
+
+                            narrator_match = self.NARRATOR_PATTERN.match(content)
+                            if narrator_match:
+                                dialogue = DialogueLine(
+                                    speaker="Narrator",
+                                    text=narrator_match.group("text"),
+                                    line_number=line_num,
+                                    label=self.current_label,
+                                    conditions=option_scoped_conditions,
+                                )
+                                current_dialogues.append(dialogue)
+                                continue
+
                     continue
 
             # Track non-choice state assignments so scene activation conditions can

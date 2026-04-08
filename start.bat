@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 cd /d "%~dp0"
 
@@ -23,7 +23,7 @@ if not exist "%VENV_PY%" (
 		)
 	)
 
-	%BASE_PYTHON% -m venv "%VENV_DIR%"
+	!BASE_PYTHON! -m venv "%VENV_DIR%"
 	if errorlevel 1 (
 		echo.
 		echo Failed to create virtual environment.
