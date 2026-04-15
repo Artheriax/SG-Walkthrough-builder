@@ -455,6 +455,15 @@ label MilaStart5x5_2:
     d "I can't really pin it down yet. Maybe trust?"
     mi "That's a good sign!"
     mi "Well... let's find out how I can be of service..."
+    jump MilaBathLewdx
+
+
+
+
+
+label MilaBathLewdContinue:
+    $ persistent.unlockedLewdMila_3 = True
+    $ renpy.end_replay()
     mi "My stomach is so lean."
     d "Are you on a diet?"
     mi "No, I don't follow a diet. I have always been mindful about what I eat." 
@@ -558,6 +567,7 @@ label MilaStart5x5_2:
     d "Yeah, Moogle. A cat."
     mi "He sounds cute."
     d "He was the biggest asshole I've ever met."
+    $ persistent.unlockedImageMila_CH1_1 = True
     d "But he was a good boy."
     mi "Did he pass away?"
     d "I'm sure he did by now... But... He had no home, and when we left town in somewhat of a hurry... He wasn't on my mind."
@@ -591,7 +601,8 @@ label MilaStart5x5_2:
     d "Nah."
     mi "I know it's not my place, but it might help you deal with the past."
     mi "Let's go to bed..."
-    $ renpy.movie_cutscene("images/Animations/CH1-3/CH1_Red_Kite.webm", stop_music=False)
+    $ renpy.pause(3, hard=True)
+    #$ renpy.movie_cutscene("images/Animations/CH1-3/CH1_Red_Kite.webm", stop_music=False)
     $ persistent.RedVelvet = True
     jump ZaraTrain5x5
 
@@ -739,6 +750,7 @@ label NamiNight5x5:
     d "You will sleep here."
     n "Dude, are you aware of-"
     d "Nami. You'll stay."
+    $ persistent.unlockedImageNami_CH1_1 = True
     n "What if I don't want to?"
     d "We've been through this before, and I've warned you."
     d "I know you can feel it and I know it's hard to fight against... But if you want this to work, you'll need to fight it."
@@ -1154,6 +1166,7 @@ label Jacuzzi5x5:
     m "I'm going to get out."
     d "Alright. Have a nice day."
     m "You too."
+    $ persistent.unlockedImageNoji_CH1_1 = True
     "You slowly feel the bubbles turn on."
     d "Mmmh..."
     za "I'm surprised you're still in here."
@@ -1631,6 +1644,7 @@ label JacuzziS2_1:
     na "Don't call my banana stupid!"
     miri "Have you ever masturbated with a banana?"
     na "Miriam!"
+    $ persistent.unlockedImageNadia_CH1_1 = True
     miri "Answer my question."
     na "Shut up." 
     miri "You totally did!"
@@ -1735,6 +1749,7 @@ label JacuzziS2_1:
         "She mumbles a few inaudible words."
     else:
         pass
+    $ persistent.unlockedImageMiriam_CH1_1 = True
     mi "*sighs* Good job, Mila."
     mi "You're on top of your game... You're the girl..."
     mi "*Mumbles* I need to stop talking to myself."
@@ -1767,6 +1782,7 @@ label JacuzziS2_1:
         mi "I know. Thanks."
     miri "I'll take the shower. I'll be fast."
     mi "Don't worry, I'll take the one upstairs."
+    $ persistent.unlockedImageMila_CH1_5 = True
     d "Remind me to buy new swim shorts."
     za "You'll need them for our surfing competition!"
     if ZaraBBallTrust5x0 is True:
@@ -1958,6 +1974,7 @@ label CheetoGaming5x5:
         d "I'm sorry if that's not what you envisioned."
         n "I never... I didn't even think it was possible to get to this point at all..."
         n "I understand it... but man... I hate the thought of you doing someone else..."
+        $ persistent.unlockedImageNami_CH1_2 = True
         n "I always thought my college years would be adventurous... Casual flings, experiencing life, going to parties..."
         n "But the moment it comes to you, I suddenly feel insanely jealous..."
         d "Cheeto... I know you. There's a real risk that after we've actually slept with each other, you lose all interest."
@@ -2354,6 +2371,7 @@ label NojiBathroomLube:
     m "Hmhmmmm... Yeah, it's fine."
     d "Your poor boyfriends."
     m "Shall we continue?"
+    $ persistent.unlockedImageNoji_CH1_3 = True
     menu:
         "Inquire about her past.":
             $ NojiPastS2_1x0 = True
@@ -2698,21 +2716,12 @@ label MassageContinue1x0:
     menu:
         "Okay.":
             $ NessiHoldingS2Ch1 = True
+            $ persistent.unlockedImageVanessa_CH1_1 = True
             d "...Okay."
             "She scratches your head... and her body radiates warmth and care. Something you didn't expect her to be capable of."
             va "You deserve to be the little spoon once in a while."
         "No.":
             va "As you wish."
-            if KateNetwork5x5 is True:
-                d "I need to ask you something."
-                va "Okay."
-                d "Have you heard of the creeps that take photos of students?"
-                va "I have."
-                d "Some girl at ZPR said that your boyfriend might be involved."
-                va "That's not true."
-                d "Are you sure?"
-                va "Don't question my judgement."
-                va "I know him."
     jump AbendessenCH1
 
 
@@ -3035,6 +3044,7 @@ label NamiEveningCH1:
     va "I'd like to see you in it."
     n "Should I go sexy or... 'sexy'?"
     va "What do you think I'd like to see?"
+    $ persistent.unlockedImageVanessa_CH1_3 = True
     n "I gotcha."
     d "You have an upcoming gathering?"
     va "Indeed. A small party." 
@@ -3133,6 +3143,7 @@ label NamiEveningCH1:
         n "There's no way I'll finish college as a virgin."
         va "As soon as you're a little more experienced, I'd love a threesome with you."
         "Nami lets out a quiet, intimidated 'Yoo...'"
+    $ persistent.unlockedImageZara_CH1_1 = True
     va "Sit down, sister."
     za "What are you all up to?"
     va "Did you know that Nami's a virgin?"
@@ -3259,6 +3270,7 @@ label NamiEveningCH1:
             za "I win."
             d "Hell no."
             za "Mhm!"
+            $ persistent.unlockedImageZara_CH1_2 = True
         "Do some situps.":
             za "Nah..." 
     n "Ah damn! I was supposed to play with Nadia and Nia twenty minutes ago!"
@@ -3284,6 +3296,7 @@ label NamiEveningCH1:
     va "There is more to her than meets the eye."
     if NessiHoldingS2Ch1 is True:
         va "Good night, [name]."
+        $ persistent.unlockedImageVanessa_CH1_4 = True
         d "...Good night." 
     else:
         va "Good night, [name]."
@@ -3343,6 +3356,7 @@ label MorningS2_Ch1_2:
     d "I will." 
     m "Good night."
     d "Good night."
+    $ persistent.unlockedImageNoji_CH1_5 = True
     d "(Zara didn't wake me.)"
     za "PSS! PSS! PSS!"
     za "BAM!"
@@ -3569,7 +3583,10 @@ label KatePlan5x5:
                 d "(...She just wants one because she hates Bella.)"
                 menu:
                     "Give her a kiss.":
+                        $ persistent.unlockedImageKate_CH1_1 = True
                     "Give her a kiss... and tease her.":
+                        $ persistent.unlockedImageKate_CH1_1 = True
+                        $ persistent.unlockedImageKate_CH1_2 = True
                         $ KateTeasing = True 
                         $ Cheating +=3
                         "You move your fingers across her crotch."
@@ -3639,6 +3656,7 @@ label KatePlan5x5:
 
 label KarenTwo5x5:
     if RoRum is True:
+        $ persistent.unlockedImageRobin_CH1_1 = True
         mi "[name] the fuckboy."
         mi "Poor Robin."
         mi "The audacity to even print this."
@@ -3684,6 +3702,7 @@ label KarenTwo5x5:
 label MilaLibraryMakeout1x0:
     if MilaVenus4x5 is False:
         $ MilaVenus = False
+    $ persistent.unlockedImageMila_CH1_10 = True
     mi "You thought I'd just let you leave like that?"
     "You smile."
     "Your hand brushes against her tiddy."
@@ -3745,11 +3764,14 @@ label MilaLibraryMakeout1x0:
             "You hear footsteps."
             d "We should probably go."
             mi "Yeah."
+            $ renpy.end_replay()
             jump VictoriaHall5x5
 
 label MilaLibraryMakeout1x0_STG3:
     menu:
         "Play with her pussy.":
+            $ persistent.unlockedImageMila_CH1_11 = True
+            $ persistent.unlockedLewdMila_1 = True
             if MilaVenus4x5 is True:
                 $ MilaVenus = True 
             else:
@@ -3762,6 +3784,7 @@ label MilaLibraryMakeout1x0_STG3:
             if MilaVenus is True:
                 menu:
                     "Keep going.":
+                        $ persistent.unlockedLewdMila_2 = True
                         $ MilaExhi_STG1 = True 
                         $ renpy.pause(0.3, hard=True)
                         "Mesmerized by Mila's bouncing tits, he watches for just a moment."
@@ -3816,11 +3839,13 @@ label MilaLibraryMakeout1x0_STG3:
     d "'Mounted.'"
     mi "I love that word. It feels so carnal."
     mi "*Sensual whisper* Mount me..."
+    $ renpy.end_replay()
     jump VictoriaHall5x5
 
 
 
 label VictoriaHall5x5:
+    $ renpy.end_replay()
     rob "Whooo cares?"
     sas "I do."
     rob "Bigger is always better."
@@ -3845,6 +3870,7 @@ label VictoriaHall5x5:
     u "Half of us are covered in bruises."
     u "I haven't noticed that, Sasha- and I've known you for a few months, haha."
     u "*Mumbles* I wonder why..."
+    $ persistent.unlockedImageSedi_CH1_1 = True
     sas "Where is Joyce?"
     u "I think she works out around this time."
     sas "Where's Joyce?"
@@ -3885,6 +3911,7 @@ label VictoriaHall5x5:
         mi "You bet they do."
         if BellaKiss3x5 and KateTeasing2 is True:
             kat "*Whisper* Maybe you are a fuckboy."
+    $ persistent.unlockedImageVictoria_CH1_1 = True
     v "You'll be there after school?"
     d "Yeah, for your first therapy session."
     v "Great! Maja will pick us up!"
@@ -4009,6 +4036,7 @@ label MarlaOffice5x5:
         ma "*Mumbles* I know..."
         ma "You don't have to do anything you don't want to."
     $ McArtModel5x5 = True
+    $ persistent.unlockedImageMarla_CH1_1 = True
     ma "As soon as Karen says you've done your deed, you're free to go."
     d "Alright."
     no "That's soo cool!"
@@ -4020,6 +4048,7 @@ label MarlaOffice5x5:
     d "Yeah... No. You'll stick to me before you end up nude."
     no "I want to end up nude!"
     no "We should practice some poses!"
+    $ persistent.unlockedImageNora_CH1_1 = True
     d "Ngh! Give me a warning next time!"
     menu:
         "I hate to admit it, but you can be weirdly adorable.":
@@ -4106,6 +4135,7 @@ label Class5x5:
                 "She grabs your hand..."
                 "And moves it below her skirt... Not far enough for you to touch her pussy, but close enough to feel the heat it radiates."
                 "You give her a subtle smile."
+                $ persistent.unlockedImageNia_CH1_1 = True 
             "Don't ask for her underwear.":
                 pass
         nia "Later [name]!"
@@ -4171,6 +4201,7 @@ label Class5x5:
         d "And I pay some attention to your weirdly shaped legs. Deal?"
         b "Deal."
         "You move in closer to the table to cover your little game."
+        $ persistent.unlockedImageBella_CH1_1 = True
         "Gently, but with some force you move your finger through the middle of her crotch."
         "You repeat the previous movement a few times... Slow, but with some confident pressure."
         b "...My god."
@@ -4224,7 +4255,7 @@ label BellchenNurse:
     "She inhales deeply."
     b "You're a raging homosexual."
     b "So for you to both like guys and girls, I'll prescribe you the following..."
-    "You've got to hold Bella Von Halen's breasts for 20 seconds, 3 sets a day."
+    b "You've got to hold Bella Von Halen's breasts for 20 seconds, 3 sets a day."
     d "Isn't there some sort of wonder pill?"
     b "I'm sorry. We ran out of cyanide."
     "She jumps into your arms and steers her nails into your back."
@@ -4373,6 +4404,7 @@ label BellchenNurse:
     b "In the backseat of my car."
     d "Give me your keys and I'll get them."
     b "Be fast! I don't know when Claire gets back."
+    $ persistent.unlockedImageBella_CH1_3 = True
     jump BellaCarPants
 
 
@@ -4382,6 +4414,7 @@ label BellaCarPants:
     saki "Aubrey, did or do you have a sexual relationship with the aforementioned professor?"
     aub "NO!"
     "She scribbles something into her notebook."
+    $ persistent.unlockedImageSaki_CH1_1 = True
     aub "What are you writing there?!"
     saki "HEY!"
     aub "GIVE ME THAT!"
@@ -4501,6 +4534,7 @@ label BellaCarPants:
     eva "You didn't peek."
     b "Alright."
     eva "HEY!"
+    $ persistent.unlockedImageEva_CH1_1 = True
     d "...She said alright and tugged on my arm."
     "Bella laughs."
     b "I knew it would work."
@@ -4521,6 +4555,7 @@ label BellaCarPants:
                             b "Yeah, I know it's disgusting."
                             b "*Whisper* I'm always the last person you kiss."
                         "Turn it into a french kiss.":
+                            $ persistent.unlockedImageEva_CH1_2 = True
                             $ CheatingKick = True 
                             $ EvaFrenchKissS2_1x0 = True
                             "The short, yet weirdly intense kiss ends as fast as it started."
@@ -4615,6 +4650,7 @@ label MarlaDachCH1:
                 ma "She has seen me a few times but we've never interacted enough to really remember each other."
                 ma "Nojiko is a little bit younger than me, yet refuses to age..."
                 ma "I hate her."
+                $ persistent.unlockedImageMarla_CH1_2 = True
                 "A subtle chuckle escapes you."
                 d "Don't jump, okay? Amber would hate that."
                 "She laughs."
@@ -4624,6 +4660,7 @@ label MarlaDachCH1:
     b "I advanced three levels in Wormy Crush."
     d "The biggest accomplishment you'll ever have."
     if BellaOnionRingS2_1x0 is True:
+        $ persistent.unlockedImageBella_CH1_3a = True
         b "We got engaged today... Mh, yeah, those three levels still made me feel more..."
         b "Unless you throw me around in my wedding dress tonight."
         d "You're the horniest noodle I've ever met."
@@ -4834,6 +4871,7 @@ label classroom5x5_End:
             "Nadia tries to separate you two."
             "You and Bella fixate Nadia against the locker..."
             "...and continue."
+            $ persistent.unlockedImageBella_CH1_8 = True
             $ Nadia_Hörnchen = True
             $ Bellchen_Fingered_1x0 = True
         else:
@@ -4853,6 +4891,7 @@ label classroom5x5_End:
             "Nadia tries to separate you two."
             "You and Bella fixate Nadia against the locker..."
             "...and continue."
+            $ persistent.unlockedImageBella_CH1_8 = True
             $ Nadia_Hörnchen = True
             $ Bellchen_Fingered_1x0 = True
     else:
@@ -5025,6 +5064,8 @@ label ClassroomContinueEndy:
             "Don't.":
                 pass  
     u "Hey!"
+    $ persistent.unlockedImageAyua_CH1_1 = True
+    $ persistent.unlockedImageJustine_CH1_1 = True
     d "Sorry. Didn't see you there."
     u "Buy me a drink before you sit on me."
     menu:
@@ -5086,6 +5127,7 @@ label ClassroomContinueEndy:
         n "I can still do that and then..."
         n "Then you'll cry after these cheeks."
         n "*High-pitched voice* Ohhh nooo! Why did I fumble the hot Cheeto who likes to sit on my face?!"
+        $ persistent.unlockedImageNami_CH1_5 = True
         d "See you later."
         n "Heeey, hey, hey!"
         n "Let me sit on your face."
@@ -5189,6 +5231,7 @@ label ClassroomContinueEndy:
                         b "*Sensitive Whisper* The good little boy won't even give Mami a spanky."
                         b "Tzz, tzz, tzz."
                         "She licks over the entire left side of your face."
+                        $ persistent.unlockedImageBella_CH1_9 = True
                 "Don't ask her about it.":
                     b "...Now you can't keep your hands off her..."
                     b "*Whispers* Yeaah... You'd really like to go inside now..."
@@ -5616,6 +5659,7 @@ label ClassroomContinueEndy:
                 menu:
                     "Tease Nadia":
                         if NadiaBananaHalf04 is True:
+                            $ persistent.unlockedImageNadia_CH1_2
                             $ Nadia_Tease = True
                             d "Are you feeling alright?"
                             na "Yes? Why?"
@@ -6161,6 +6205,7 @@ label ClassroomContinueEndy:
         d "This. Take it off." 
         b "Why would I do that?"
         b "Happy?"
+        $ persistent.unlockedImageBella_CH1_10 = True
         d "Very."
     if MilaDate is True:
         mi "Well, well, well... Why are you here all by yourself?"
@@ -6264,6 +6309,7 @@ label ClassroomContinueEndy:
         d "Do I have a say in this?"
         mi "Not if you want this here to go on."
         d "Alright. Saturday."
+        $ persistent.unlockedImageMila_CH1_6 = True
         mi "Ah! What I wanted to ask you..."
         mi "How are these training sessions going? I heard you're meeting up in the evening?"
         d "For a second I thought you meant my training with Zara."
@@ -6328,6 +6374,9 @@ label SashaArt5x5:
     rob "It's Victoria's big sister. Victoria being the cutie in the wheelchair."
     ka "Talk to Maja. Maybe she'll take care of it for you."
     ka "I heard she's coming back to ZPR to assist the coaches of the basketball team."
+    $ persistent.unlockedImageSasha_CH1_2 = True
+    $ persistent.unlockedImageSasha_CH1_3 = True
+    $ persistent.unlockedImageSasha_CH1_10 = True
     jump VictoriaTherapy5x5
 
 label VictoriaTherapy5x5:
@@ -6393,6 +6442,7 @@ label VictoriaTherapy5x5:
                 d "(...No, that's not it... This isn't the feeling of impending doom... I think I'm imagining it with the Cheeto.)"
                 menu:
                     "Bury your head between her cheeks.":
+                        $ persistent.unlockedLewdNami_1 = True
                         $ Whispers +=1 
                         $ CheetoBuryAssLicking = True 
                         n "...You gotta do more than that to get back in my graces."
@@ -6404,16 +6454,20 @@ label VictoriaTherapy5x5:
                         d "You do mean it. You just don't mean to hurt me." 
                         n "We'll roll this up later." 
                         d "...I'm sure we will."
+                        $ renpy.end_replay()
                     "Don't risk it.":
                         d "(I can't risk it...)"
                         n "We'll roll this up later." 
                         d "...I'm sure we will."
+                        $ renpy.end_replay()
             "Don't.":
                 n "..."
                 n "I'll remember this."
                 d "It's about principle."
                 d "I'll kiss you when I want to, not when you dare me to."     
                 "You sigh." 
+                $ renpy.end_replay()
+    $ renpy.end_replay()
     if KateNE_S1_1 is True:
         "Kate flops onto your lap."
         "You try to lift her up but it ends up only raising her legs."
@@ -6449,6 +6503,7 @@ label VictoriaTherapy5x5:
                         "It sounds kinda hot.":
                             $ Kate_Bella = True 
                             kate "Oh- seriously?"
+                            $ persistent.unlockedImageKate_CH1_3 = True
                             kate "I totally didn't expect you to say that."
                             d "I like Bella, and I'll tell you right now that I won't let you hurt her."
                             kate "I'm not talking about hurting her..."
@@ -6462,6 +6517,7 @@ label VictoriaTherapy5x5:
                             kate "*Chuckles* I will."
                             menu:
                                 "Kiss her tiddy.":
+                                    $ persistent.unlockedImageKate_CH1_4 = True
                                     $ Cheating +=2
                                     $ KateTrust = True 
                                     $ KateTiddyKiss = True 
@@ -6527,7 +6583,7 @@ label CollegeCH1End:
     son "-No."
     d "You're okay?"
     son "Oh. Yes. I'm just exhausted and a little hot."
-    d "I heard you sparred with Ayua. I didn't take you for a fighter."
+    d "People said you sparred with Ayua. I didn't take you for a fighter."
     "She smiles sheepishly but doesn't say anything."
     d "Well, I see you."
     kate "Oh? What are you looking at, Sonya?"
@@ -6598,6 +6654,7 @@ label CollegeCH1End:
     son "There's a museum for firearms and they have an exhibition this week and I'd like to go there. Do you want to come with me?"
     d "*Chuckles* Firearms?"
     son "Yes."
+    $ persistent.unlockedImageSonya_CH1_1 = True
     d "(She says it as if its the most casual thing in the world.)"
     menu:
         "Yeah. I'd like to.":
@@ -6753,6 +6810,7 @@ label CollegeCH1End:
     nia "Whaaaat? That's not how it went, Nami!"
     n "It totally was!"
     nia "Nadia, here's how it really went..."
+    $ persistent.unlockedImageNami_CH1_10 = True
     d "Oh yeah? Say it again."
     b "I'll pull down your pants..."
     d "And then?"
@@ -6774,6 +6832,7 @@ label CollegeCH1End:
     d "Like whom?"
     b "Someone who's tongue and pussy could rock both our worlds..."
     d "Oh... I can't wait to be inside her..."
+    $ persistent.unlockedImageNia_CH1_3 = True 
     nia "*Breathy* I'll rock your worlds."
     "Nia shyly giggles!" 
     "Nadia laughs."
@@ -6978,8 +7037,9 @@ label VicTherapy1x0:
     else:
         d "Still waters run deep."
     v "I feel good."
+    $ persistent.unlockedImageVictoria_CH1_2 = True
     celi "That's great."
-    v "I... I did feel a tingle this morning."
+    v "I... I felt a tingle this morning."
     celi "That's awesome!"
     v "But- I don't know if I imagined it..."
     celi "You didn't."
@@ -7079,6 +7139,7 @@ label VicTherapy1x0:
     maj "Let's not talk about them..."
     v "...The things I heard."
     maj "Be quiet."
+    $ persistent.unlockedImageVictoria_CH1_3 = True
     v "You moan so loud."
     maj "Vic!"
     jump VicCollageCH1x
@@ -7120,8 +7181,10 @@ label VicTherapy5x5Continue:
                 v "Professional's get paid."
                 d "This is pro-bono." 
                 "You lift her up, your arms hugging her hip."
+                $ persistent.unlockedImageVictoria_CH1_4 = True
                 menu:
                     "Kiss her pussy.":
+                        $ persistent.unlockedLewdVictoria_1 = True
                         $ VicPussyKiss5x5 = True
                         $ Whispers +=1
                         $ MOSM = True
@@ -7173,6 +7236,7 @@ label VicTherapy5x5Continue:
             v "I'd love some new stories! Custom tailored or not!"
             v "Pick some out for me!"
             d "I'll keep my eyes open."
+            $ persistent.unlockedImageVictoria_CH1_7 = True
             v "*Whispers* Make sure the books are really dirty."
         else:
             d "Will you be okay?"
@@ -7180,6 +7244,7 @@ label VicTherapy5x5Continue:
             d "Alright."
         d "I'm going to dry myself now."
         v "Carry me to bed. I'm tired."
+        $ renpy.end_replay()
     else:
         maj "[name], wait outside. I'll dry her up."
         d "Sure."
@@ -7210,7 +7275,7 @@ label BellaBar5x5:
     b "We're not even a couple... Hell, we're not even having sex!"
     ay "Yeah, that's an issue."
     b "And his eyes... God."
-    b "Like he stares at me, he probably thinks it intimates me, but no... I get so hot."
+    b "Like he stares at me, he probably thinks it intimidates me, but no... I get so hot."
     b "...I lose myself in his fucking, beautiful, deep green eyes."
     ay "You're not exclusive. Get your fix somewhere else while he decides what he wants."
     b "I can't. I only want this fool."
@@ -7271,13 +7336,15 @@ label MajaBathroom5x5:
     d "Who of them isn't hot?"
     maj "I just left out Nami because if there was something between you two, it would've happened already."
     maj "And Robin sounds hot."
+    $ persistent.unlockedImageMaja_CH1_1 = True
     if VicDrying5x5 is True:
         maj "Soo... How was it... drying Vic up?"
         d "Interesting."
-        d "I got her to lean forward."
-        maj "I noticed that she's been avoiding it."
-        d "I told her I'd give her a kiss if she did it."
-        maj "That's sooo cute!"
+        if VicLeaning5x5 is True:
+            d "I got her to lean forward."
+            maj "I noticed that she's been avoiding it."
+            d "I told her I'd give her a kiss if she did it."
+            maj "That's sooo cute!"
         if VicPussyKiss5x5 is True:
             d "And then I kissed her pussy."
             maj "OH MY GOD! TOO MUCH INFO!"
@@ -7300,6 +7367,7 @@ label MajaBathroom5x5:
             menu:
                 "Flirt a little.":
                     $ MajaFlirt = True 
+                    $ persistent.unlockedImageMaja_CH1_4 = True
                     maj "Umm..."
                     maj "Oh. Okay." 
                 "Don't.": 
@@ -7382,6 +7450,7 @@ label VicEnd5x5:
         d "That's not it."
         maj "I know. You're not polite."
     d "Zara's cool too."
+    $ persistent.unlockedImageMaja_CH1_6 = True
     d "Having her around motivates me to workout."
     maj "Zara's a great girl."
     maj "She and Vic used to be close friends and Zara *chuckles*..."
@@ -7431,20 +7500,21 @@ label VicEnd5x5:
             d "It's on the way to Zara's. Königsberg."
             d "I'll give her a call on the drive."
             if VicPussyKiss5x5 and MajaFlirt is True:
-                maj "*Mumbles* Vic takes him out to dinner and Bella gets desert."
+                maj "*Mumbles* Vic takes him out to dinner and Bella gets dessert."
         "Don't ask her for a cig.":
             d "No wait... Drive me to Bella."
             maj "Because I know where that is."
             d "It's on the way to Zara's. Königsberg."
             d "I'll give her a call on the drive."
             if VicPussyKiss5x5 and MajaFlirt is True:
-                maj "*Mumbles* Vic takes him out to dinner and she gets desert." 
+                maj "*Mumbles* Vic takes him out to dinner and she gets dessert." 
     d "You can call me and Nami at any time if you need help."
     maj "I appreciate it."
     jump BellchenStudy1x0 
 
 
 label BellchenStudy1x0:
+    $ persistent.unlockedImageBella_CH1_11 = True
     b "Why did you have to call? I was about to take a nap!"
     d "You said it yourself, we need to get some work done."
     b "After getting some good cock, I need a nap!"
@@ -7473,6 +7543,7 @@ label BellchenStudy1x0:
         b "I'll get back to you, but I've gotta confirm something first."
         b "Give me a few minutes..."
         d "I can wait in your room."
+        $ persistent.unlockedImageBella_CH1_12 = True
         b "No. I have to change... and tidy up."
         b "I'll yell for you." 
         d "Hurry up."
@@ -7538,7 +7609,7 @@ label BellaHomeContinueDG:
     d "I do... but I can't if I don't want a panic attack."
     b "Is that why you haven't gone down on me before?"
     d "Mh."
-    b "...What happened to you?"
+    b "*Heavy* ...What happened to you?"
     d "You did... Something nice for a change."
     "She keeps quiet and doesn't push it any further, well aware that you dodged the question."
     "She gently moves her hand through your hair... and strokes your head..."
@@ -7558,6 +7629,7 @@ label BellaHomeContinueDG:
     b "...Do you want to let me go?"
     d "I really don't."
     "She flops out of your arms."
+    $ persistent.unlockedImageBella_CH1_13 = True
     b "...Where did I put my clothes?"
     d "Check by the whiteboard."
     b "If I don't find them there, you'll be punished."
@@ -7569,6 +7641,7 @@ label BellaHomeContinueDG:
     b "...But you keep pounding my sore pussy and I-"
     d "Ssshhhh, you're talking yourself into a horny-frenzy."
     b "My pussy needs attention."
+    $ renpy.end_replay()
     if Kate_Bella is True:
         d "(Hmm... Kate wants Bella to give her pussy some attention and I agreed to help her with it...)"
         d "(...What if I turned it around, and instead worked on Kate serving Bella at the end?)"
@@ -7577,6 +7650,7 @@ label BellaHomeContinueDG:
     d "I have to ask... Why did you get a picture of a 'cock'?"
     b "I ordered it for Nadia. She wants to give it to Nancy for some reason."
     b "I don't know why, and I usually don't entertain her ideas or- ask questions. It somehow always ends up with a lecture about Element 115 and Bob Lazar."
+    $ persistent.unlockedLewdBella_1 = True
     jump BellchenStudy1x0_2
 
 
@@ -7724,6 +7798,7 @@ label BellchenStudy1x0_2:
             pass
     else:
         pass 
+    $ persistent.unlockedImageBella_CH1_13a= True
     jump BellaStudyEnd2x0
 
 
@@ -7783,6 +7858,7 @@ label ZaraTraining5x5:
                 d "Cheeto?"
                 n "Mh?"
                 d "...Show me your boobies."
+                $ persistent.unlockedImageNami_CH1_11 = True
                 "The Cheeto leaves the room with a big smile."
             "Grab her hand.":
                 d "I'll see you later, Cheeto."
@@ -7796,7 +7872,8 @@ label ZaraTraining5x5:
         "Mila smiles friendly."
         mi "Hi!"
         d "Hey, what's up?"
-        mi "You have basketball training."
+        $ persistent.unlockedImageMila_CH1_7 = True
+        mi "You have basketball practice."
         d "You actually remembered."
         mi "Of course."
         d "Thanks Mila."
@@ -7834,6 +7911,7 @@ label ZaraStudyyyy:
     jump SashaAngel5x5
 
 label SashaAngel5x5:
+    $ persistent.unlockedImageSasha_CH1_1 = True
     u "Sasha? Your phone."
     sas "Yes?"
     rob "Hey! Is it a bad time?"
@@ -7850,6 +7928,7 @@ label SashaAngel5x5:
     sas "They're new... I hope."
     u "How did you get the wings to stay up?"
     u "Mine are flaccid."
+    $ persistent.unlockedImageSonya_CH1_2 = True
     u "Okay... I stand corrected."
     son "Umm..."
     sas "I'm surprised they put you up for this one... I'd assume, Katie has some less revealing shoots, too."
@@ -7926,13 +8005,14 @@ label SashaAngel5x5:
     ele "It's too dark. I can't see it."
     ele "However, the idea is bold."
     sas "You have to be bold to make a difference."
+    $ persistent.unlockedImageAdriana_CH1_2 = True
     adri "I apologize. I got a super important call about college gossip." 
     john "What's the idea here?"
     katie "Focus mostly on Elenor and Adrianna with the pictures."
     katie "Sasha is only here for the video and her private collection, the ZPR Model Ad, and to make our lives harder."
     sas "I will need you for a few extra photos later, John."
     sas "Casual, in my normal attire on the upper floor."
-    john "...I promsised my wife I'd make it home for the Price is Wrong."
+    john "...I promised my wife I'd make it home for the Price is Wrong."
     sas "You'll get paid extra."
     john "Fine. But we'll make it quick."
     jump Basketball5x5
@@ -8042,6 +8122,7 @@ label Basketball5x5:
     za "Sure."
     mh "And when you're already on it..."
     mh "...note down the cutest butts."
+    $ persistent.unlockedImageHill_CH1_1 = True
     j "Good luck."
     d "You too."
     "Tobias loses the standoff against Jeff-"
@@ -8136,6 +8217,7 @@ label Basketball5x5:
     za "NO!"
     ms "Alright, good game!"
     ms "Team [name] won by a very small lead."
+    $ persistent.unlockedImageHill_CH1_2 = True
     dam "I was a little out of my head today... I just couldn't perform the way I wanted to..."
     d "So was I."
     dam "I appreciate that you stood in for me, however... It makes me feel small and weak."
@@ -8246,8 +8328,8 @@ label Basketball5x5:
         d "*Whispers* I'd rather have you stay as far away from the edge as possible."
         b "*Sensual Whisper* Whyyy?"
         d "*Whispers* Because I don't want to lose you."
-        $ renpy.pause(0.2, hard=True)
-        $ renpy.movie_cutscene("images/Animations/CH1-3/Honeymoon2a.webm", stop_music=False)
+        $ renpy.pause(3, hard=True)
+        #$ renpy.movie_cutscene("images/Animations/CH1-3/Honeymoon2a.webm", stop_music=False)
         $ persistent.Honeymoon = True
         "Thirty minutes passed without a single word being spoken."
         b "*Whispers* This is one of these moments, I'll never forget."
@@ -8272,6 +8354,7 @@ label Basketball5x5:
         b "I'd scratch myself on the way down to give the illusion of a fight."
         d "I go first."
         "You catch her after she jumps down the last few steps."
+        $ persistent.unlockedImageBella_CH1_17 = True
         jump BellchenSoup 
 
 label BellchenSoup:
@@ -8380,6 +8463,7 @@ label BellchenSoup:
     b "Heidi."
     d "Heidi Von Halen..."
     d "How old is she?"
+    $ persistent.unlockedImageBella_CH1_20 = True
     b "I'm a year older..."
     d "I'm sure we'll find a day next week where we can visit her together."
     d "I remember the stories you told me... About the little dares you gave each other."
@@ -8422,6 +8506,7 @@ label BellchenSoup:
     if Bella_OR_STG1 is True and Sanitized is False:
         d "We're not exclusive."
         b "I know, but I want you."
+    $ persistent.unlockedImageAmber_CH1_1 = True
     b "I hope after your pocket-rocket is fixed, I'll get to return the favor by letting you beg me for sex."
     d "I will never beg for sex."
     b "Not even as part of a roleplay?"
@@ -8435,8 +8520,10 @@ label BellchenSoup:
             b "*Childish voice* Do you need to prove to them what a man's man you are?"
     b "We're not yet there where I'll let you watch me pee."
     b "Unless that's the key to power your engine... if not, get out."
+    $ persistent.unlockedImageBella_CH1_21 = True
     d "Hey Amber."
     am "Hello [name]."
+    $ persistent.unlockedImageAmber_CH1_3 = True
     d "Are you surprised to see me?"
     am "I knew I would eventually stumble upon you."
     am "I just wasn't sure if it would be with or without clothes." 
@@ -8534,6 +8621,7 @@ label BellchenSoup:
 
 
 label ZaraStars:
+    $ persistent.unlockedImageZara_CH1_5 = True
     $ ZaraStars5x5 = True 
     menu:
         "Hold her hand.":
@@ -8599,6 +8687,7 @@ label ZaraStarsHome1:
     va "Now... let's figure out who was right..."
     va "Nami's guess was that you two got kidnapped."
     va "My guess; you two went to a store, bought lube, ripped condoms, and a bottle of cheap wine... booked a cheap motel, to then do the horizontal tango."
+    $ persistent.unlockedImageNoji_CH1_6 = True
     d "You're bo-"
     va "Nojiko's guess was-"
     d "Really Noji?"
@@ -8683,6 +8772,7 @@ label ShowerMorningNoji:
         m "That's great."
     m "I'll be at work soon. I don't think we'll see each other before tomorrow."
     m "Have fun tonight."
+    $ persistent.unlockedImageNoji_CH1_7 = True
     d "Thanks... and try not to stab your co-workers." 
     if BellaSoup is False:
         d "(I'll give Amber a call in a bit... see if she can squeeze me in today.)"
@@ -8719,6 +8809,7 @@ label StudentHouse:
     d "(Apparently we're not the only ones looking at the place.)"
     n "Yo, this looks... nice?"
     n "Hello!"
+    $ persistent.unlockedImageSasha_CH1_4 = True
     n "Sasha?"
     sas "Yes?"
     n "I didn't recognize you with the cappy."
@@ -8816,6 +8907,7 @@ label StudentHouse:
         d "Perhaps we can cuddle afterwards to get warm."
         za "Heeeey... Platonic cuddling only!"
         d "How does that work?"
+        $ persistent.unlockedImageZara_CH1_7 = True
         "She moves your hands up, both hands cupping her boobs."
         d "...And this is more platonic than before?"
     d "What I've seen yet is much prettier than I expected."
@@ -9514,6 +9606,7 @@ label MilaVenusImages:
     d "I'll see if I can improve my photography skill a little."
     mi "That's nice."
     mi "Our sex tape will look great."
+    $ persistent.unlockedImageMila_CH1_8 = True
     jump WGContinue
 
 label WGContinue:
@@ -9771,6 +9864,7 @@ label WGContinue:
     sas "You're lucky I still had some pasties in my purse."
     rob "*High pitched voice* I'm hooot!"
     rob "I need to be careful not to flash anyone."
+    $ persistent.unlockedImageSasha_CH1_5 = True
     sas "You need to be careful?! I feel like I'm wearing the clothes of a leprechaun!"
     if SashaHandTouchTease and Sasha_Deranged is True:
         sas "I only did it because there's just girls here."
@@ -9820,6 +9914,7 @@ label WGContinue:
     sas "A woman."
     rob "You talk to your cuddly toys in a funny, high-pitched voice when you think nobody's around! You-"
     rob "Au, au, auu!"
+    $ persistent.unlockedImageRobin_CH1_3 = True
     rob "I wish you had a less hurtful love language!"
     rob "Why can't you be one of those love-to-give-gifts-people?"
     sas "*Sigh* Why did you do that?"
@@ -9872,6 +9967,7 @@ label WGContinue:
     rob "And if it isn't the clothes it's the fake temporary tattoos you sometimes put on your skin."
     rob "...My final words regarding the dress situation."
     rob "You're just like your mother."
+    $ persistent.unlockedImageSasha_CH1_11 = True
     "Robin laughs hysterically while Sasha pins her down."
     sas "Bid Señor Abbondanza farewell."
     rob "Hey no! I was joking! Don't kill him!"
@@ -9978,6 +10074,7 @@ label WGContinue:
                 "Her clitoris is caught between your index and middle finger, and you increase the pressure more and more."
                 "Her grip softens and she releases your jewels."
                 "You gently loosen your electrifying grip and it fades into a lingering sensation."
+                $ persistent.unlockedImageZara_CH1_12 = True
                 d "A bit of an unorthodox training method."
                 za "It's... It's a workout to withstand the wicked longing. That evil desire to do something that could lessen our potential athetlic achievements."
                 d "What?"
@@ -10026,6 +10123,8 @@ label WGContinue:
 
 
 label ZaraExercisePT1:
+    $ persistent.unlockedLewdZara_1 = True 
+    $ persistent.unlockedImageZara_CH1_11 = True
     za "What kind of exercises could we come up with?"
     d "I guess a dry hump sex position?"
     za "That's actually pretty good-"
@@ -10052,7 +10151,7 @@ label ZaraExercisePT1:
     "She slams her pelvis into yours, her pussy rubbing over the rough surface of your pants."
     d "Okay- put the weight down."
     "You feel every fiber in her body relax." 
-    "Slightly shaking and with an unsteady breath, she steps off you."
+    "Slightly shaking and with an unsteady breath, she steps away from you."
     d "Are you okay?"
     za "I'm not okay... I'm so not okay."
     za "I feel nauseous. We used too much weight."
@@ -10081,6 +10180,7 @@ label ZaraExercisePT1:
     d "No one to tell about... No one to tell you... that you're the best version of yourself."
     d "You'll be doing just fine, but don't lose yourself on the way to the top."
     za "*Whisper* We said no more sets..."
+    $ renpy.end_replay()
     jump ContinueWG
 
 
@@ -10147,6 +10247,7 @@ label ContinueWG:
     sasmo "For christ's sake, Sasha! Go upstairs and change!"
     sas "What's wrong, Mother?"
     sasmo "Sasha!"
+    $ persistent.unlockedImageSasha_CH1_14 = True
     sas "I want to go to that bar."
     butler "My lady. The Howard's are here."
     sasmo "Sasha! I'm serious! GO UPSTAIRS and change."
@@ -10250,16 +10351,19 @@ label ContinueWG:
         d "Do you lotion your butt?"
         mi "*Laughs* Of course!"
         mi "You want your butt to be smooth!"
+        $ persistent.unlockedImageMila_CH1_9 = True
     elif NamiDate is True:
         n "Yo!"
         d "I'm tired Cheeto... We should leave and take a nap."
         n "Naps are for bibis."
         n "What you need is to slap my ass while you suck on my nipplies."
         n "Let's get this over with, and we'll continue this conversation in my room."
+        $ persistent.unlockedImageNami_CH1_12 = True
         n "Mhhhhhhhh!"
     elif ZaraTeasing is True:
         d "Just some quick reps..."
         za "Only feminine girly girls train with gloves."
+        $ persistent.unlockedImageZara_CH1_8 = True
         "Her soft, yet firm skin gently moves between your fingers." 
         d "Good set. The weight was adequate. No complaints."
         za "Mhm!"
@@ -10429,6 +10533,7 @@ label ContinueWG:
         rob "in whatever outfit you want"
         rob "in whatever outfit you want me"
         rob "in whatever outfit you want me to."
+        $ persistent.unlockedImageRobin_CH1_4 = True
         if BellaNonExclusive5x0 is True:
             rob "Plus: I'll chauffeur you and Bella around when you go on dates allowing you both to drink!"
         else:
@@ -10463,6 +10568,7 @@ label WG_End:
     n "In a minute."
     menu:
         "Observe Sasha with interest.":
+
             $ Sashas_Grace = True 
             d "(She appears so graceful, yet there is something about her I cannot interpret)."
             d "(A distance dwells within her... perhaps even from herself, as though part of her has remained somewhere far away.)"
@@ -10477,6 +10583,7 @@ label WG_End:
             sas "You're staring at me."
             d "Yeah."
             "She closes the curtains."
+            $ persistent.unlockedImageSasha_CH1_6 = True
         "Let your eyes wander.":
             "She closes the curtains." 
     sas "Why doesn't Nami talk to Sedi?"
@@ -10540,6 +10647,7 @@ label WG_End:
     sas "Nami and Zara need me for something... But we can pick you up?"
     sedi "I don't think Nami will like that."
     sas "Then she can leave." 
+    $ persistent.unlockedImageSedi_CH1_2 = True
     n "Alright. We're leaving."
     if RobinFriends is True:
         rob "Bye [name]. We'll see each other tonight."
@@ -10616,6 +10724,8 @@ label SonyaSunOfTheMorning:
     aki "'You're what Ayua always aspired to be... and what Adrianna failed to be, and-'"
     aki "And if he's hot, we'll fuck on his desk after the audience is gone, and I'll blow both your urns a kiss."
     ay "Did you know that we've voted you 'least liked' of all the siblings?"
+    $ persistent.unlockedImageAki_CH1_1 = True
+    $ persistent.unlockedImageAdriana_CH1_1 = True
     aki "So... you're telling me I placed first?"
     adri "Mom gave them clothes as well."
     ay "Yaah... I gave her some of the fetish underwear we wouldn't wear that Aki, Sasha and I stole from the Venus studio."
@@ -10629,8 +10739,8 @@ label SonyaSunOfTheMorning:
     adri "Get it afterward. Mom needs us."
     drs "*Farsi* My name is Dr. Solus."
     drs "*Farsi* I would like to extend a warm welcome to the both of you."
-    $ renpy.pause(0.2, hard=True)
-    $ renpy.movie_cutscene("images/Animations/CH1-3/AngelxDivineSerpent.webm", stop_music=False)
+    $ renpy.pause(3, hard=True)
+    #$ renpy.movie_cutscene("images/Animations/CH1-3/AngelxDivineSerpent.webm", stop_music=False)
     $ persistent.DivineSerpent = True
     john "That's what we have."
     katie "Good."
@@ -10961,6 +11071,7 @@ label HomeEnd5x5:
         menu:
             "Oh, I expected a pic of your boobs.":
                 d "I expected a pic of your boobs." 
+                $ persistent.unlockedImageBella_CH1_22 = True
                 b "Happy?"
                 d "Happy."
             "It did.":
@@ -11146,6 +11257,7 @@ label HomeEnd5x5:
         b "Don't we all?"
         sas "It was fun. A few of yours were a little far stretched and didn't have the desired effect. But overall, a solid performance for a naked mole rat."
         b "It was fun, but considering the hourly rate I paid for your escort services, I expected a little more. Perhaps put that mouth to a better use next time."
+    $ persistent.unlockedImageSasha_CH1_9 = True
     b "Thank you Emilio. Thank you Desi."
     b "I hope you both die in a very painful way."
     emi "You're welcome, honey."
@@ -11188,6 +11300,7 @@ label ReverieEnd:
     n "Me too."
     n "I'll go slip in and see if I can find my jewelry."
     if ZaraTeasing or ZaraInterested is True:
+        $ persistent.unlockedImageZara_CH1_9 = True
         menu:
             "She's so beautiful.":
                 $ Zara_Date = True 
